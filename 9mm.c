@@ -17,6 +17,9 @@ typedef struct {
     char* input; // トークン文字列（エラーメッセージ用）
 } Token;
 
+// 入力プログラム
+char* user_input;
+
 // トークナイズした結果のトークン列はこの配列に保存する
 // 100個以上のトークンは来ないものとする
 Token tokens[100];
@@ -32,9 +35,22 @@ void error(char* fmt, ...)
     exit(1);
 }
 
-// pが指している文字列をトークンに分割してtokensに保存する
-void tokenize(char* p)
+// エラー箇所を報告するための関数
+void error_at(char* loc, char* msg)
 {
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
+    fprintf(stderr, "^ %s\n", msg);
+    exit(1);
+}
+
+// user_inputが指している文字列を
+// トークンに分割してtokensに保存する
+void tokenize()
+{
+    char* p = user_input;
+
     int i = 0;
     while (*p) {
         // 空白文字をスキップ
@@ -59,8 +75,7 @@ void tokenize(char* p)
             continue;
         }
 
-        error("トークナイズできません: %s", p);
-        exit(1);
+        error_at(p, "トークナイズできません");
     }
 
     tokens[i].ty = TK_EOF;
@@ -75,7 +90,8 @@ int main(int argc, char** argv)
     }
 
     // トークナイズする
-    tokenize(argv[1]);
+    user_input = argv[1];
+    tokenize();
 
     // アセンブリの前半部分を出力
     printf(".intel_syntax noprefix\n");
@@ -85,7 +101,7 @@ int main(int argc, char** argv)
     // 式の最初は数でなければならないので、それをチェックして
     // 最初のmov命令を出力
     if (tokens[0].ty != TK_NUM)
-        error("最初の項が数ではありません");
+        error_at(tokens[0].input, "数ではありません");
     printf("  mov rax, %d\n", tokens[0].val);
 
     // `+ <数>`あるいは`- <数>`というトークンの並びを消費しつつ
@@ -95,7 +111,7 @@ int main(int argc, char** argv)
         if (tokens[i].ty == '+') {
             i++;
             if (tokens[i].ty != TK_NUM)
-                error("予期しないトークンです: %s", tokens[i].input);
+                error_at(tokens[i].input, "数ではありません");
             printf("  add rax, %d\n", tokens[i].val);
             i++;
             continue;
@@ -104,13 +120,13 @@ int main(int argc, char** argv)
         if (tokens[i].ty == '-') {
             i++;
             if (tokens[i].ty != TK_NUM)
-                error("予期しないトークンです: %s", tokens[i].input);
+                error_at(tokens[i].input, "数ではありません");
             printf("  sub rax, %d\n", tokens[i].val);
             i++;
             continue;
         }
 
-        error("予期しないトークンです: %s", tokens[i].input);
+        error_at(tokens[i].input, "予期しないトークンです");
     }
 
     printf("  ret\n");
