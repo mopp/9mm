@@ -39,10 +39,12 @@ Token tokens[100];
 // 現在読んでいるトークンの位置.
 int pos;
 
-Node* term();
+Node* relational();
+Node* add();
 Node* mul();
 Node* unary();
 Node* term();
+void error(char* fmt, ...);
 
 // エラー箇所を報告するための関数
 void error_at(char* loc, char* msg)
@@ -68,7 +70,39 @@ void tokenize()
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
+        if (strncmp(p, "==", 2) == 0) {
+            tokens[i].ty = TK_EQ;
+            tokens[i].input = p;
+            i++;
+            p += 2;
+            continue;
+        }
+
+        if (strncmp(p, "!=", 2) == 0) {
+            tokens[i].ty = TK_NE;
+            tokens[i].input = p;
+            i++;
+            p += 2;
+            continue;
+        }
+
+        if (strncmp(p, "<=", 2) == 0) {
+            tokens[i].ty = TK_LE;
+            tokens[i].input = p;
+            i++;
+            p += 2;
+            continue;
+        }
+
+        if (strncmp(p, ">=", 2) == 0) {
+            tokens[i].ty = TK_GE;
+            tokens[i].input = p;
+            i++;
+            p += 2;
+            continue;
+        }
+
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>') {
             tokens[i].ty = *p;
             tokens[i].input = p;
             i++;
@@ -118,11 +152,46 @@ int consume(int ty)
     return 1;
 }
 
-// expr  = mul ("+" mul | "-" mul)*
-// mul   = unary ("*" unary | "/" unary)*
-// unary = ("+" | "-")? term
-// term  = num | "(" expr ")"
+// expr       = equality
+// equality   = relational ("==" relational | "!=" relational)*
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+// add        = mul ("+" mul | "-" mul)*
+// mul        = unary ("*" unary | "/" unary)*
+// unary      = ("+" | "-")? term
+// term       = num | "(" expr ")
 Node* expr()
+{
+    Node* node = relational();
+
+    for (;;) {
+        if (consume(TK_EQ))
+            node = new_node(TK_EQ, node, relational());
+        else if (consume(TK_NE))
+            node = new_node(TK_NE, node, relational());
+        else
+            return node;
+    }
+}
+
+Node* relational()
+{
+    Node* node = add();
+
+    for (;;) {
+        if (consume('<'))
+            node = new_node('<', node, add());
+        else if (consume(TK_LE))
+            node = new_node(TK_LE, node, add());
+        else if (consume('>'))
+            node = new_node('<', add(), node);
+        else if (consume(TK_GE))
+            node = new_node(TK_LE, add(), node);
+        else
+            return node;
+    }
+}
+
+Node* add()
 {
     Node* node = mul();
 
@@ -194,6 +263,32 @@ void gen(Node* node)
     printf("  pop rax\n");
 
     switch (node->ty) {
+        case TK_EQ:
+            printf("  cmp rax, rdi\n");
+            printf("  sete al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case TK_NE:
+            printf("  cmp rax, rdi\n");
+            printf("  setne al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case '<':
+            printf("  cmp rax, rdi\n");
+            printf("  setl al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case TK_LE:
+            printf("  cmp rax, rdi\n");
+            printf("  setle al\n");
+            printf("  movzb rax, al\n");
+            break;
+        case TK_GE:
+            error("Bug, parser: TK_GE exists\n");
+            break;
+        case '>':
+            error("Bug, parser: > exists\n");
+            break;
         case '+':
             printf("  add rax, rdi\n");
             break;
