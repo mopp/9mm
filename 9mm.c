@@ -9,6 +9,10 @@ enum {
     ND_NUM = 256, // 整数のノードの型
     TK_NUM,       // 整数トークン
     TK_EOF,       // 入力の終わりを表すトークン
+    TK_EQ,        // ==
+    TK_NE,        // !=
+    TK_LE,        // <=
+    TK_GE,        // >=
 };
 
 typedef struct Node {
@@ -37,6 +41,7 @@ int pos;
 
 Node* term();
 Node* mul();
+Node* unary();
 Node* term();
 
 // エラー箇所を報告するための関数
@@ -113,9 +118,10 @@ int consume(int ty)
     return 1;
 }
 
-// expr = mul ("+" mul | "-" mul)*
-// mul  = term ("*" term | "/" term)*
-// term = num | "(" expr ")"
+// expr  = mul ("+" mul | "-" mul)*
+// mul   = unary ("*" unary | "/" unary)*
+// unary = ("+" | "-")? term
+// term  = num | "(" expr ")"
 Node* expr()
 {
     Node* node = mul();
@@ -132,7 +138,7 @@ Node* expr()
 
 Node* mul()
 {
-    Node* node = term();
+    Node* node = unary();
 
     for (;;) {
         if (consume('*'))
@@ -142,6 +148,15 @@ Node* mul()
         else
             return node;
     }
+}
+
+Node* unary()
+{
+    if (consume('+'))
+        return term();
+    if (consume('-'))
+        return new_node('-', new_node_num(0), term());
+    return term();
 }
 
 Node* term()
