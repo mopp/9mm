@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,9 +33,14 @@ typedef struct {
 // 入力プログラム
 char* user_input;
 
-// トークナイズした結果のトークン列はこの配列に保存する
-// 100個以上のトークンは来ないものとする
-Token tokens[100];
+typedef struct {
+    void** data;
+    int capacity;
+    int len;
+} Vector;
+
+// トークナイズした結果のトークン列
+Vector* tokens = NULL;
 
 // 現在読んでいるトークンの位置.
 int pos;
@@ -45,6 +51,32 @@ Node* mul();
 Node* unary();
 Node* term();
 void error(char* fmt, ...);
+
+Vector* new_vector()
+{
+    Vector* vec = malloc(sizeof(Vector));
+    vec->data = malloc(sizeof(void*) * 16);
+    vec->capacity = 16;
+    vec->len = 0;
+    return vec;
+}
+
+void vec_push(Vector* vec, void* elem)
+{
+    if (vec->capacity == vec->len) {
+        vec->capacity *= 2;
+        vec->data = realloc(vec->data, sizeof(void*) * vec->capacity);
+    }
+    vec->data[vec->len++] = elem;
+}
+
+void vec_push_token(Vector* tokens, int ty, int val, char* input) {
+    Token* t = malloc(sizeof(Token));
+    t->ty = ty;
+    t->val = val;
+    t->input = input;
+    vec_push(tokens, t);
+}
 
 // エラー箇所を報告するための関数
 void error_at(char* loc, char* msg)
@@ -71,49 +103,42 @@ void tokenize()
         }
 
         if (strncmp(p, "==", 2) == 0) {
-            tokens[i].ty = TK_EQ;
-            tokens[i].input = p;
+            vec_push_token(tokens, TK_EQ, 0, p);
             i++;
             p += 2;
             continue;
         }
 
         if (strncmp(p, "!=", 2) == 0) {
-            tokens[i].ty = TK_NE;
-            tokens[i].input = p;
+            vec_push_token(tokens, TK_NE, 0, p);
             i++;
             p += 2;
             continue;
         }
 
         if (strncmp(p, "<=", 2) == 0) {
-            tokens[i].ty = TK_LE;
-            tokens[i].input = p;
+            vec_push_token(tokens, TK_LE, 0, p);
             i++;
             p += 2;
             continue;
         }
 
         if (strncmp(p, ">=", 2) == 0) {
-            tokens[i].ty = TK_GE;
-            tokens[i].input = p;
+            vec_push_token(tokens, TK_GE, 0, p);
             i++;
             p += 2;
             continue;
         }
 
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>') {
-            tokens[i].ty = *p;
-            tokens[i].input = p;
+            vec_push_token(tokens, *p, 0, p);
             i++;
             p++;
             continue;
         }
 
         if (isdigit(*p)) {
-            tokens[i].ty = TK_NUM;
-            tokens[i].input = p;
-            tokens[i].val = strtol(p, &p, 10);
+            vec_push_token(tokens, TK_NUM, strtol(p, &p, 10), p - 1);
             i++;
             continue;
         }
@@ -121,8 +146,8 @@ void tokenize()
         error_at(p, "トークナイズできません");
     }
 
-    tokens[i].ty = TK_EOF;
-    tokens[i].input = p;
+
+    vec_push_token(tokens, TK_EOF, 0, p);
 }
 
 Node* new_node(int ty, Node* lhs, Node* rhs)
@@ -146,7 +171,8 @@ Node* new_node_num(int val)
 // 成功したら1が返る
 int consume(int ty)
 {
-    if (tokens[pos].ty != ty)
+    Token** ts = (Token**)(tokens->data);
+    if (ts[pos]->ty != ty)
         return 0;
     pos++;
     return 1;
@@ -230,20 +256,22 @@ Node* unary()
 
 Node* term()
 {
+    Token** ts = (Token**)(tokens->data);
+
     // 次のトークンが'('なら、"(" expr ")"のはず
     if (consume('(')) {
         Node* node = expr();
         if (!consume(')'))
-            error_at(tokens[pos].input,
+            error_at(ts[pos]->input,
                      "開きカッコに対応する閉じカッコがありません");
         return node;
     }
 
     // そうでなければ数値のはず
-    if (tokens[pos].ty == TK_NUM)
-        return new_node_num(tokens[pos++].val);
+    if (ts[pos]->ty == TK_NUM)
+        return new_node_num(ts[pos++]->val);
 
-    error_at(tokens[pos].input,
+    error_at(ts[pos]->input,
              "数値でも開きカッコでもないトークンです");
 
     return NULL;
@@ -319,12 +347,44 @@ void error(char* fmt, ...)
     exit(1);
 }
 
+void expect(int line, int expected, int actual)
+{
+    if (expected == actual)
+        return;
+    fprintf(stderr, "%d: %d expected, but got %d\n",
+            line, expected, actual);
+    exit(1);
+}
+
+void runtest()
+{
+    Vector* vec = new_vector();
+    expect(__LINE__, 0, vec->len);
+
+    for (uintptr_t i = 0; i < 100; i++)
+        vec_push(vec, (void*)i);
+
+    expect(__LINE__, 100, vec->len);
+    expect(__LINE__, 0, (uintptr_t)vec->data[0]);
+    expect(__LINE__, 50, (uintptr_t)vec->data[50]);
+    expect(__LINE__, 99, (uintptr_t)vec->data[99]);
+
+    printf("OK\n");
+}
+
 int main(int argc, char** argv)
 {
     if (argc != 2) {
         error("引数の個数が正しくありません");
         return 1;
     }
+
+    if (strncmp("-test", argv[1], 5) == 0) {
+        runtest();
+        return 0;
+    }
+
+    tokens = new_vector();
 
     // トークナイズする
     user_input = argv[1];
