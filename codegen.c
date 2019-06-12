@@ -14,6 +14,15 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_RETURN) {
+        gen(node->lhs);
+        printf("  pop rax\n");
+        printf("  mov rsp, rbp\n");
+        printf("  pop rbp\n");
+        printf("  ret\n");
+        return;
+    }
+
     if (node->ty == ND_NUM) {
         printf("  push %d\n", node->val);
         return;

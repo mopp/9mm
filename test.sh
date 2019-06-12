@@ -43,5 +43,13 @@ try 0  '3 > 1 + 2;'
 try 1  'a = 1; a;'
 try 3  'a = 1; b = 2; a+b;'
 try 1  'a = 1; b = 2; (a<b);'
+try 1  'return 1;'
+try 5  'return 5; return 8;'
+
+# try 14 << EOS
+# a = 3;
+# b = 5 * 6 - 8;
+# return a + b / 2;
+# EOS
 
 echo OK

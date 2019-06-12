@@ -15,6 +15,7 @@ static Node* mul();
 static Node* unary();
 static Node* term();
 static int consume(int);
+static int is_alnum(char);
 
 // 入力プログラム
 char* user_input;
@@ -39,6 +40,14 @@ void tokenize()
         // 空白文字をスキップ
         if (isspace(*p)) {
             p++;
+            continue;
+        }
+
+        // NOTE: "return "との比較では対応出来ないケースがあるか考える.
+        if ((strncmp(p, "return", 6) == 0) && !is_alnum(p[6])) {
+            vec_push_token(tokens, TK_RETURN, 0, p);
+            i++;
+            p += 6;
             continue;
         }
 
@@ -97,7 +106,7 @@ void tokenize()
 }
 
 // program    = stmt*
-// stmt       = expr ";"
+// stmt       = expr ";" | "return" expr ";"
 // expr       = assign
 // assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
@@ -118,10 +127,21 @@ void program()
 
 static Node* stmt()
 {
-    Node* node = expr();
-    Token** ts = (Token**)(tokens->data);
-    if (!consume(';'))
+    Node* node;
+
+    if (consume(TK_RETURN)) {
+        node = malloc(sizeof(Node));
+        node->ty = ND_RETURN;
+        node->lhs = expr();
+    } else {
+        node = expr();
+    }
+
+    if (!consume(';')) {
+        Token** ts = (Token**)(tokens->data);
         error_at(ts[pos]->input, "';'ではないトークンです");
+    }
+
     return node;
 }
 
@@ -266,4 +286,12 @@ static Node* new_node_num(int val)
     node->ty = ND_NUM;
     node->val = val;
     return node;
+}
+
+static int is_alnum(char c)
+{
+    return ('a' <= c && c <= 'z') ||
+           ('A' <= c && c <= 'Z') ||
+           ('0' <= c && c <= '9') ||
+           (c == '_');
 }
