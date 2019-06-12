@@ -4,11 +4,17 @@
 // 与えられたノードの持つ変数のアドレスをスタックにpushする
 static void gen_lval(Node* node)
 {
-    if (node->ty != ND_LVAR)
+    if (node->ty != ND_LVAR && node->ty != ND_LVAR_NEW)
         error("代入の左辺値が変数ではありません");
 
+    printf("  # LVAR\n");
+
+    if (node->ty == ND_LVAR_NEW) {
+        printf("  sub rsp, 8\n");
+    }
+
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->offset);
+    printf("  sub rax, %zd\n", node->offset);
     printf("  push rax\n");
 }
 

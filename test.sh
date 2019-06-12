@@ -45,6 +45,8 @@ try 3  'a = 1; b = 2; a+b;'
 try 1  'a = 1; b = 2; (a<b);'
 try 1  'return 1;'
 try 5  'return 5; return 8;'
+try 6  'foo = 1; bar = 2 + 3; return foo + bar;'
+try 30 'x_d = 10; y_d = 20; x_d+y_d;'
 
 # try 14 << EOS
 # a = 3;

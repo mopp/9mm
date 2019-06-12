@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+
 #include "9mm.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -29,13 +31,18 @@ int pos;
 // 式の集まり.
 Node* code[100];
 
+// 変数の個数
+size_t count_local_variables;
+
+// 変数名 -> offset
+Map* variable_name_map;
+
 // user_inputが指している文字列を
 // トークンに分割してtokensに保存する
 void tokenize()
 {
     char* p = user_input;
 
-    int i = 0;
     while (*p) {
         // 空白文字をスキップ
         if (isspace(*p)) {
@@ -43,66 +50,88 @@ void tokenize()
             continue;
         }
 
+        Token* token = malloc(sizeof(Token));
+
         // NOTE: "return "との比較では対応出来ないケースがあるか考える.
         if ((strncmp(p, "return", 6) == 0) && !is_alnum(p[6])) {
-            vec_push_token(tokens, TK_RETURN, 0, p);
-            i++;
+            token->ty = TK_RETURN;
+            token->input = p;
+            vec_push(tokens, token);
             p += 6;
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            vec_push_token(tokens, TK_IDENT, 0, p);
-            i++;
-            p++;
-            continue;
-        }
-
         if (strncmp(p, "==", 2) == 0) {
-            vec_push_token(tokens, TK_EQ, 0, p);
-            i++;
+            token->ty = TK_EQ;
+            token->input = p;
+            vec_push(tokens, token);
             p += 2;
             continue;
         }
 
         if (strncmp(p, "!=", 2) == 0) {
-            vec_push_token(tokens, TK_NE, 0, p);
-            i++;
+            token->ty = TK_NE;
+            token->input = p;
+            vec_push(tokens, token);
             p += 2;
             continue;
         }
 
         if (strncmp(p, "<=", 2) == 0) {
-            vec_push_token(tokens, TK_LE, 0, p);
-            i++;
+            token->ty = TK_LE;
+            token->input = p;
+            vec_push(tokens, token);
             p += 2;
             continue;
         }
 
         if (strncmp(p, ">=", 2) == 0) {
-            vec_push_token(tokens, TK_GE, 0, p);
-            i++;
+            token->ty = TK_GE;
+            token->input = p;
+            vec_push(tokens, token);
             p += 2;
             continue;
         }
 
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=') {
-            vec_push_token(tokens, *p, 0, p);
-            i++;
+            token->ty = *p;
+            token->input = p;
+            vec_push(tokens, token);
             p++;
             continue;
         }
 
         if (isdigit(*p)) {
-            vec_push_token(tokens, TK_NUM, strtol(p, &p, 10), p - 1);
-            i++;
+            token->ty = TK_NUM;
+            token->input = p;
+            token->val = strtol(p, &p, 10);
+            vec_push(tokens, token);
             continue;
         }
+
+        // find the variable name.
+        char* variable_name_head = p;
+        while (is_alnum(*p)) {
+            ++p;
+        }
+
+        if (variable_name_head != p) {
+            size_t n = p - variable_name_head;
+            token->ty = TK_IDENT;
+            token->name = strndup(variable_name_head, n);
+            token->input = variable_name_head;
+            vec_push(tokens, token);
+            continue;
+        }
+
+        free(token);
 
         error_at(p, "トークナイズできません");
     }
 
-    vec_push_token(tokens, TK_EOF, 0, p);
+    Token* token = malloc(sizeof(Token));
+    token->ty = TK_EOF;
+    vec_push(tokens, token);
 }
 
 // program    = stmt*
@@ -115,6 +144,9 @@ void tokenize()
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? term
 // term       = num | ident | "(" expr ")
+// ident      = chars (chars | num)+
+// chars      = [a-zA-Z_]
+// num        = [0-9]+
 void program()
 {
     int i = 0;
@@ -240,17 +272,26 @@ static Node* term()
         return node;
     }
 
-    // そうでなければ数値のはず
     if (ts[pos]->ty == TK_NUM) {
+        // 数値
         return new_node_num(ts[pos++]->val);
     } else if (ts[pos]->ty == TK_IDENT) {
-        // 変数名はaからzの位置文字のみ
-        // 関数フレーム上でもアルファベットで固定の位置とする
-        char varname = ts[pos++]->input[0];
+        // ローカル変数
+        char* variable_name = ts[pos++]->name;
 
         Node* node = malloc(sizeof(Node));
-        node->ty = ND_LVAR;
-        node->offset = (varname - 'a' + 1) * 8;
+        void* offset = map_get(variable_name_map, variable_name);
+        if (NULL == offset) {
+            // スタック領域を割り当てる.
+            ++count_local_variables;
+            node->ty = ND_LVAR_NEW;
+            node->offset = count_local_variables * 8;
+            map_put(variable_name_map, variable_name, (void*)node->offset);
+        } else {
+            node->ty = ND_LVAR;
+            node->offset = (uintptr_t)offset;
+        }
+
         return node;
     }
 

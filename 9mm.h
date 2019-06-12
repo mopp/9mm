@@ -1,12 +1,15 @@
 #ifndef H_9MM
 #define H_9MM
 
+#include <stddef.h>
+#include <stdint.h>
 
 enum {
     // 抽象構文木の型を表す値
     ND_NUM = 256, // 整数のノードの型
     ND_RETURN,
-    ND_LVAR,
+    ND_LVAR_NEW, // ローカル変数の宣言
+    ND_LVAR,     // ローカル変数の参照
 
     // トークンの型を表す値
     TK_RETURN,
@@ -24,12 +27,13 @@ typedef struct Node {
     struct Node* lhs; // 左辺
     struct Node* rhs; // 右辺
     int val;          // tyがND_NUMの場合のみ使う
-    int offset;       // tyがND_LVARの場合のみ使う
+    uintptr_t offset; // tyがND_LVARの場合のみ使う
 } Node;
 
 typedef struct {
     int ty;      // トークンの型
     int val;     // tyがTK_NUMの場合、その数値
+    char* name;  // tyがTK_IDENTの場合、その名前
     char* input; // トークン文字列（エラーメッセージ用）
 } Token;
 
@@ -53,6 +57,8 @@ extern char* user_input;
 extern Vector* tokens;
 extern int pos;
 extern Node* code[100];
+extern size_t count_local_variables;
+extern Map* variable_name_map;
 void tokenize();
 void program();
 
@@ -62,7 +68,6 @@ void gen(Node*);
 // container.c
 Vector* new_vector();
 void vec_push(Vector*, void*);
-void vec_push_token(Vector*, int, int, char*);
 Map* new_map();
 void map_put(Map*, char*, void*);
 void* map_get(Map*, char*);

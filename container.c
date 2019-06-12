@@ -22,15 +22,6 @@ void vec_push(Vector* vec, void* elem)
     vec->data[vec->len++] = elem;
 }
 
-void vec_push_token(Vector* tokens, int ty, int val, char* input)
-{
-    Token* t = malloc(sizeof(Token));
-    t->ty = ty;
-    t->val = val;
-    t->input = input;
-    vec_push(tokens, t);
-}
-
 Map* new_map()
 {
     Map* map = malloc(sizeof(Map));
