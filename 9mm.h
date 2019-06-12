@@ -27,7 +27,6 @@ typedef struct Node {
     int offset;       // tyがND_LVARの場合のみ使う
 } Node;
 
-// トークンの型
 typedef struct {
     int ty;      // トークンの型
     int val;     // tyがTK_NUMの場合、その数値
@@ -40,6 +39,10 @@ typedef struct {
     int len;
 } Vector;
 
+typedef struct {
+    Vector* keys;
+    Vector* vals;
+} Map;
 
 // main.c
 void error_at(char*, char*);
@@ -60,6 +63,10 @@ void gen(Node*);
 Vector* new_vector();
 void vec_push(Vector*, void*);
 void vec_push_token(Vector*, int, int, char*);
+Map* new_map();
+void map_put(Map*, char*, void*);
+void* map_get(Map*, char*);
+
 void runtest();
 
 
