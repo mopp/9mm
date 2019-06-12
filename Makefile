@@ -12,4 +12,4 @@ test: 9mm
 	./test.sh
 
 clean:
-	rm -f 9mm *.o *~
+	rm -f 9mm *.o *~ tmp tmp.s
