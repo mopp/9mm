@@ -5,6 +5,10 @@
 
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
+static Node* stmt();
+static Node* expr();
+static Node* assign();
+static Node* equality();
 static Node* relational();
 static Node* add();
 static Node* mul();
@@ -21,6 +25,9 @@ Vector* tokens = NULL;
 // 現在読んでいるトークンの位置.
 int pos;
 
+// 式の集まり.
+Node* code[100];
+
 // user_inputが指している文字列を
 // トークンに分割してtokensに保存する
 void tokenize()
@@ -31,6 +38,13 @@ void tokenize()
     while (*p) {
         // 空白文字をスキップ
         if (isspace(*p)) {
+            p++;
+            continue;
+        }
+
+        if ('a' <= *p && *p <= 'z') {
+            vec_push_token(tokens, TK_IDENT, 0, p);
+            i++;
             p++;
             continue;
         }
@@ -63,7 +77,7 @@ void tokenize()
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=') {
             vec_push_token(tokens, *p, 0, p);
             i++;
             p++;
@@ -79,17 +93,52 @@ void tokenize()
         error_at(p, "トークナイズできません");
     }
 
-
     vec_push_token(tokens, TK_EOF, 0, p);
 }
-// expr       = equality
+
+// program    = stmt*
+// stmt       = expr ";"
+// expr       = assign
+// assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 // add        = mul ("+" mul | "-" mul)*
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? term
-// term       = num | "(" expr ")
-Node* expr()
+// term       = num | ident | "(" expr ")
+void program()
+{
+    int i = 0;
+    Token** ts = (Token**)(tokens->data);
+    while (ts[pos]->ty != TK_EOF) {
+        code[i++] = stmt();
+    }
+    code[i] = NULL;
+}
+
+static Node* stmt()
+{
+    Node* node = expr();
+    Token** ts = (Token**)(tokens->data);
+    if (!consume(';'))
+        error_at(ts[pos]->input, "';'ではないトークンです");
+    return node;
+}
+
+static Node* expr()
+{
+    return assign();
+}
+
+static Node* assign()
+{
+    Node* node = equality();
+    if (consume('='))
+        node = new_node('=', node, assign());
+    return node;
+}
+
+static Node* equality()
 {
     Node* node = relational();
 
@@ -172,8 +221,18 @@ static Node* term()
     }
 
     // そうでなければ数値のはず
-    if (ts[pos]->ty == TK_NUM)
+    if (ts[pos]->ty == TK_NUM) {
         return new_node_num(ts[pos++]->val);
+    } else if (ts[pos]->ty == TK_IDENT) {
+        // 変数名はaからzの位置文字のみ
+        // 関数フレーム上でもアルファベットで固定の位置とする
+        char varname = ts[pos++]->input[0];
+
+        Node* node = malloc(sizeof(Node));
+        node->ty = ND_LVAR;
+        node->offset = (varname - 'a' + 1) * 8;
+        return node;
+    }
 
     error_at(ts[pos]->input,
              "数値でも開きカッコでもないトークンです");

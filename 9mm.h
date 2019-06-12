@@ -2,22 +2,27 @@
 #define H_9MM
 
 
-// トークンの型を表す値
 enum {
+    // 抽象構文木の型を表す値
     ND_NUM = 256, // 整数のノードの型
-    TK_NUM,       // 整数トークン
-    TK_EOF,       // 入力の終わりを表すトークン
-    TK_EQ,        // ==
-    TK_NE,        // !=
-    TK_LE,        // <=
-    TK_GE,        // >=
+    ND_LVAR,
+
+    // トークンの型を表す値
+    TK_IDENT, // 識別子
+    TK_NUM,   // 整数トークン
+    TK_EOF,   // 入力の終わりを表すトークン
+    TK_EQ,    // ==
+    TK_NE,    // !=
+    TK_LE,    // <=
+    TK_GE,    // >=
 };
 
 typedef struct Node {
-    int ty;           // 演算子かND_NUM
+    int ty;           // 演算子、ND_NUMかND_LVAR
     struct Node* lhs; // 左辺
     struct Node* rhs; // 右辺
     int val;          // tyがND_NUMの場合のみ使う
+    int offset;       // tyがND_LVARの場合のみ使う
 } Node;
 
 // トークンの型
@@ -42,8 +47,9 @@ void error(char*, ...);
 extern char* user_input;
 extern Vector* tokens;
 extern int pos;
+extern Node* code[100];
 void tokenize();
-Node* expr();
+void program();
 
 // codegen.c
 void gen(Node*);
