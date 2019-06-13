@@ -125,7 +125,7 @@ void tokenize()
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}') {
             token->ty = *p;
             token->input = p;
             vec_push(tokens, token);
@@ -169,6 +169,7 @@ void tokenize()
 
 // program    = stmt*
 // stmt       = expr ";" |
+//              "{" stmt* "}" |
 //              "if" "(" expr ")" stmt ("else" stmt)? |
 //              "while" "(" expr ")" stmt |
 //              "for" "(" expr? ";" expr? ")" stmt |
@@ -274,6 +275,23 @@ static Node* stmt()
         node = malloc(sizeof(Node));
         node->ty = ND_FOR;
         node->type_depend_value = node_for;
+    } else if (consume('{')) {
+        // block
+        Vector* stmts = new_vector();
+
+        while (!consume('}')) {
+            if (consume(TK_EOF)) {
+                error_at(ts[pos]->input, "ブロックが閉じられていない");
+            }
+
+            vec_push(stmts, stmt());
+        }
+
+        node = malloc(sizeof(Node));
+        node->ty = ND_BLOCK;
+        node->lhs = NULL;
+        node->rhs = NULL;
+        node->type_depend_value = stmts;
     } else {
         if (consume(TK_RETURN)) {
             node = malloc(sizeof(Node));

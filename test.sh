@@ -59,11 +59,7 @@ try 10 'for (i=0; i<10; i=i+1) 1; return i;'
 try 1 'for (i=0; i<10; i=i+1) return 1+i; return i;'
 try 45 'c=0; for (i=0; i<10; i=i+1) c = c+i; return c;'
 try 10 'c=0; for (i=0; i<10; i=i+1) c = c+1; return c;'
-
-# try 14 << EOS
-# a = 3;
-# b = 5 * 6 - 8;
-# return a + b / 2;
-# EOS
+try 1 'if (1) {c=1; return c;}'
+try 9 'for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}}'
 
 echo OK

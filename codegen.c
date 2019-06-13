@@ -20,6 +20,15 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_BLOCK) {
+        Vector* stmts = node->type_depend_value;
+        for (size_t i = 0; i < stmts->len; i++) {
+            gen(stmts->data[i]);
+            printf("  pop rax\n");
+        }
+        return;
+    }
+
     if (node->ty == ND_IF) {
         NodeIfElse* node_if_else = node->type_depend_value;
 

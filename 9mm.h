@@ -13,6 +13,7 @@ enum {
     ND_IF,       // if
     ND_WHILE,    // while
     ND_FOR,      // for
+    ND_BLOCK,    // "{" stmt* "}"
 
     // トークンの型を表す値
     TK_RETURN,
