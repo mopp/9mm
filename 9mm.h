@@ -10,12 +10,19 @@ enum {
     ND_RETURN,
     ND_LVAR_NEW, // ローカル変数の宣言
     ND_LVAR,     // ローカル変数の参照
+    ND_IF,       // if
+    ND_WHILE,    // while
+    ND_FOR,      // for
 
     // トークンの型を表す値
     TK_RETURN,
     TK_IDENT, // 識別子
     TK_NUM,   // 整数トークン
     TK_EOF,   // 入力の終わりを表すトークン
+    TK_IF,    // if
+    TK_ELSE,  // else
+    TK_WHILE, // while
+    TK_FOR,   // for
     TK_EQ,    // ==
     TK_NE,    // !=
     TK_LE,    // <=
@@ -23,12 +30,26 @@ enum {
 };
 
 typedef struct Node {
-    int ty;           // 演算子、ND_NUMかND_LVAR
-    struct Node* lhs; // 左辺
-    struct Node* rhs; // 右辺
-    int val;          // tyがND_NUMの場合のみ使う
-    uintptr_t offset; // tyがND_LVARの場合のみ使う
+    int ty;                  // 演算子、ND_NUMかND_LVAR
+    struct Node* lhs;        // 左辺
+    struct Node* rhs;        // 右辺
+    int val;                 // tyがND_NUMの場合のみ使う
+    uintptr_t offset;        // tyがND_LVARの場合のみ使う
+    void* type_depend_value; // tyで変わる
 } Node;
+
+typedef struct {
+    struct Node* condition;
+    struct Node* body;
+    struct Node* else_body; // NULLはelse節が無いことを意味する
+} NodeIfElse;
+
+typedef struct {
+    struct Node* initializing;
+    struct Node* condition;
+    struct Node* updating;
+    struct Node* body;
+} NodeFor;
 
 typedef struct {
     int ty;      // トークンの型

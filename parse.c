@@ -61,6 +61,38 @@ void tokenize()
             continue;
         }
 
+        if ((strncmp(p, "if", 2) == 0) && !is_alnum(p[2])) {
+            token->ty = TK_IF;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 2;
+            continue;
+        }
+
+        if ((strncmp(p, "else", 4) == 0) && !is_alnum(p[4])) {
+            token->ty = TK_ELSE;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 4;
+            continue;
+        }
+
+        if ((strncmp(p, "while", 5) == 0) && !is_alnum(p[5])) {
+            token->ty = TK_WHILE;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 5;
+            continue;
+        }
+
+        if ((strncmp(p, "for", 3) == 0) && !is_alnum(p[3])) {
+            token->ty = TK_FOR;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 3;
+            continue;
+        }
+
         if (strncmp(p, "==", 2) == 0) {
             token->ty = TK_EQ;
             token->input = p;
@@ -131,11 +163,16 @@ void tokenize()
 
     Token* token = malloc(sizeof(Token));
     token->ty = TK_EOF;
+    token->input = p;
     vec_push(tokens, token);
 }
 
 // program    = stmt*
-// stmt       = expr ";" | "return" expr ";"
+// stmt       = expr ";" |
+//              "if" "(" expr ")" stmt ("else" stmt)? |
+//              "while" "(" expr ")" stmt |
+//              "for" "(" expr? ";" expr? ")" stmt |
+//              "return" expr ";"
 // expr       = assign
 // assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
@@ -160,18 +197,95 @@ void program()
 static Node* stmt()
 {
     Node* node;
+    Token** ts = (Token**)(tokens->data);
 
-    if (consume(TK_RETURN)) {
+    if (consume(TK_IF)) {
+        if (!consume('(')) {
+            error_at(ts[pos]->input, "ifの条件部は'('から始まらなくてはならない");
+        }
+
+        NodeIfElse* node_if_else = malloc(sizeof(NodeIfElse));
+        node_if_else->condition = expr();
+
+        if (!consume(')')) {
+            error_at(ts[pos]->input, "ifの条件部は')'で終わらなければならない");
+        }
+
+        node_if_else->body = stmt();
+
+        if (consume(TK_ELSE)) {
+            node_if_else->else_body = stmt();
+        } else {
+            node_if_else->else_body = NULL;
+        }
+
         node = malloc(sizeof(Node));
-        node->ty = ND_RETURN;
-        node->lhs = expr();
-    } else {
-        node = expr();
-    }
+        node->ty = ND_IF;
+        node->type_depend_value = node_if_else;
+    } else if (consume(TK_WHILE)) {
+        if (!consume('(')) {
+            error_at(ts[pos]->input, "whileの条件部は'('から始まらなくてはならない");
+        }
 
-    if (!consume(';')) {
-        Token** ts = (Token**)(tokens->data);
-        error_at(ts[pos]->input, "';'ではないトークンです");
+        node = malloc(sizeof(Node));
+        node->ty = ND_WHILE;
+        node->lhs = expr(); // 条件式.
+
+        if (!consume(')')) {
+            error_at(ts[pos]->input, "whileの条件部は')'で終わらなければならない");
+        }
+
+        node->rhs = stmt(); // body
+    } else if (consume(TK_FOR)) {
+        if (!consume('(')) {
+            error_at(ts[pos]->input, "forの直後は'('から始まらなくてはならない");
+        }
+
+        NodeFor* node_for = malloc(sizeof(NodeFor));
+        if (!consume(';')) {
+            node_for->initializing = expr();
+            if (!consume(';')) {
+                error_at(ts[pos]->input, "';'ではないトークンです");
+            }
+        } else {
+            node_for->initializing = NULL;
+        }
+
+        if (!consume(';')) {
+            node_for->condition = expr();
+            if (!consume(';')) {
+                error_at(ts[pos]->input, "';'ではないトークンです");
+            }
+        } else {
+            node_for->condition = NULL;
+        }
+
+        if (consume(')')) {
+            node_for->updating = NULL;
+        } else {
+            node_for->updating = expr();
+            if (!consume(')')) {
+                error_at(ts[pos]->input, "forは')'で終わらなければならない");
+            }
+        }
+
+        node_for->body = stmt();
+
+        node = malloc(sizeof(Node));
+        node->ty = ND_FOR;
+        node->type_depend_value = node_for;
+    } else {
+        if (consume(TK_RETURN)) {
+            node = malloc(sizeof(Node));
+            node->ty = ND_RETURN;
+            node->lhs = expr();
+        } else {
+            node = expr();
+        }
+
+        if (!consume(';')) {
+            error_at(ts[pos]->input, "';'ではないトークンです");
+        }
     }
 
     return node;

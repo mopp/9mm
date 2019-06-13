@@ -47,6 +47,18 @@ try 1  'return 1;'
 try 5  'return 5; return 8;'
 try 6  'foo = 1; bar = 2 + 3; return foo + bar;'
 try 30 'x_d = 10; y_d = 20; x_d+y_d;'
+try 3 'if (1) return 3;'
+try 0 'foo = 1; bar = 2; if (1) return 0;'
+try 1 'foo = 1; bar = 2; if (foo==1) return 1;'
+try 2 'foo = 1; bar = 2; if (foo==bar) return 1; else return 2;'
+try 0 'while (0) return 1; 0;'
+try 1 'while (1) return 1; 0;'
+try 3 'i=0; while (i!=3) i=i+1; i;'
+try 1 'for (;;) return 1;'
+try 10 'for (i=0; i<10; i=i+1) 1; return i;'
+try 1 'for (i=0; i<10; i=i+1) return 1+i; return i;'
+try 45 'c=0; for (i=0; i<10; i=i+1) c = c+i; return c;'
+try 10 'c=0; for (i=0; i<10; i=i+1) c = c+1; return c;'
 
 # try 14 << EOS
 # a = 3;

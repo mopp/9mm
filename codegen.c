@@ -20,6 +20,73 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_IF) {
+        NodeIfElse* node_if_else = node->type_depend_value;
+
+        gen(node_if_else->condition);
+
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je .L_else_%p\n", node_if_else);
+
+        gen(node_if_else->body);
+
+        if (node_if_else->else_body == NULL) {
+            printf("  .L_else_%p:\n", node_if_else);
+        } else {
+            printf("  jmp .L_if_end_%p\n", node_if_else);
+            printf("  .L_else_%p:\n", node_if_else);
+            gen(node_if_else->else_body);
+            printf("  .L_if_end_%p:\n", node_if_else);
+        }
+
+        return;
+    }
+
+    if (node->ty == ND_WHILE) {
+        printf("  .L_while_begin_%p:\n", node);
+
+        gen(node->lhs);
+
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je .L_while_end_%p\n", node);
+
+        gen(node->rhs);
+        printf("  jmp .L_while_begin_%p\n", node);
+
+        printf("  .L_while_end_%p:\n", node);
+
+        return;
+    }
+
+    if (node->ty == ND_FOR) {
+        NodeFor* node_for = node->type_depend_value;
+
+        if (node_for->initializing != NULL) {
+            gen(node_for->initializing);
+        }
+        printf("  .L_for_begin_%p:\n", node_for);
+
+        if (node_for->condition != NULL) {
+            gen(node_for->condition);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je .L_for_end_%p\n", node_for);
+        }
+
+        gen(node_for->body);
+        if (node_for->updating != NULL) {
+            gen(node_for->updating);
+        }
+
+        printf("  jmp .L_for_begin_%p\n", node_for);
+
+        printf("  .L_for_end_%p:\n", node_for);
+
+        return;
+    }
+
     if (node->ty == ND_RETURN) {
         gen(node->lhs);
         printf("  pop rax\n");
