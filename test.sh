@@ -5,7 +5,7 @@ try() {
     input="$2"
 
     ./9mm "$input" >tmp.s
-    gcc -o tmp tmp.s
+    gcc -o tmp tmp.s lib.o
     ./tmp
     actual="$?"
 
@@ -61,5 +61,8 @@ try 45 'c=0; for (i=0; i<10; i=i+1) c = c+i; return c;'
 try 10 'c=0; for (i=0; i<10; i=i+1) c = c+1; return c;'
 try 1 'if (1) {c=1; return c;}'
 try 9 'for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}}'
+try 9 'for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}}'
+try 0 'foo();'
+try 1 'for (i = 0; i<3; i=i+1) { foo(); } return 1;'
 
 echo OK

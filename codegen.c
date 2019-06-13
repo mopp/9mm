@@ -20,6 +20,18 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_CALL) {
+        char* func_name = node->type_depend_value;
+
+        // RSPが16の倍数になるようにする.
+        printf("  and rsp, -16\n");
+
+        printf("  call %s\n", func_name);
+        printf("  push rax\n");
+
+        return;
+    }
+
     if (node->ty == ND_BLOCK) {
         Vector* stmts = node->type_depend_value;
         for (size_t i = 0; i < stmts->len; i++) {

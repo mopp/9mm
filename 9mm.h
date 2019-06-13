@@ -14,6 +14,7 @@ enum {
     ND_WHILE,    // while
     ND_FOR,      // for
     ND_BLOCK,    // "{" stmt* "}"
+    ND_CALL,     // 関数呼び出し
 
     // トークンの型を表す値
     TK_RETURN,

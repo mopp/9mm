@@ -181,7 +181,9 @@ void tokenize()
 // add        = mul ("+" mul | "-" mul)*
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? term
-// term       = num | ident | "(" expr ")
+// term       = num |
+//              ident ("(" ")")? |
+//              "(" expr ")
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
 // num        = [0-9]+
@@ -408,20 +410,29 @@ static Node* term()
         // 数値
         return new_node_num(ts[pos++]->val);
     } else if (ts[pos]->ty == TK_IDENT) {
-        // ローカル変数
-        char* variable_name = ts[pos++]->name;
-
         Node* node = malloc(sizeof(Node));
-        void* offset = map_get(variable_name_map, variable_name);
-        if (NULL == offset) {
-            // スタック領域を割り当てる.
-            ++count_local_variables;
-            node->ty = ND_LVAR_NEW;
-            node->offset = count_local_variables * 8;
-            map_put(variable_name_map, variable_name, (void*)node->offset);
+        char* ident_name = ts[pos++]->name;
+
+        if (consume('(')) {
+            // 関数呼び出し
+            node->ty = ND_CALL;
+            node->type_depend_value = ident_name;
+            if (!consume(')')) {
+                error_at(ts[pos]->input, "関数呼び出しの)が無い");
+            }
         } else {
-            node->ty = ND_LVAR;
-            node->offset = (uintptr_t)offset;
+            // ローカル変数
+            void* offset = map_get(variable_name_map, ident_name);
+            if (NULL == offset) {
+                // スタック領域を割り当てる.
+                ++count_local_variables;
+                node->ty = ND_LVAR_NEW;
+                node->offset = count_local_variables * 8;
+                map_put(variable_name_map, ident_name, (void*)node->offset);
+            } else {
+                node->ty = ND_LVAR;
+                node->offset = (uintptr_t)offset;
+            }
         }
 
         return node;
