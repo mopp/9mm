@@ -65,9 +65,13 @@ void gen(Node* node)
             printf("  pop %s\n", regs[i]);
         }
 
-        // RSPが16の倍数になるようにする.
-        printf("  and rsp, -16\n");
+        // rspを16バイトアラインメントにする.
+        // 8バイトでalignして古いrspを格納する.
+        printf("  mov rax, rsp\n");
+        printf("  and rsp, -8\n");
+        printf("  push rax\n");
         printf("  call %s\n", node_call->name);
+        printf("  pop rsp\n");
         printf("  push rax\n");
 
         return;
