@@ -171,7 +171,7 @@ void tokenize()
 }
 
 // program    = function*
-// function   = ident "(" ("int" ident ("," "int" ident)*)* ")" block
+// function   = "int" ident "(" ("int" ident ("," "int" ident)*)* ")" block
 // block      = "{" stmt* "}"
 // stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
 //              "while" "(" expr ")" stmt |
@@ -206,6 +206,11 @@ void program()
 static Node* function()
 {
     Token** ts = (Token**)(tokens->data);
+    if (ts[pos]->ty != TK_IDENT || strcmp(ts[pos]->name, "int") != 0) {
+        error_at(ts[pos]->input, "関数の返り値がintではない");
+    }
+    ++pos;
+
     if (ts[pos]->ty != TK_IDENT) {
         error_at(ts[pos]->input, "先頭が関数名ではない");
     }
