@@ -5,7 +5,7 @@ try() {
     input="$2"
 
     ./9mm "$input" >tmp.s
-    gcc -g -o tmp tmp.s lib.o
+    gcc -g -o tmp tmp.s src/lib.o
     ./tmp
     actual="$?"
 

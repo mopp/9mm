@@ -1,15 +1,15 @@
 CFLAGS = -std=c11 -Wall -g -static
-SRCS   = $(wildcard *.c)
+SRCS   = $(wildcard src/*.c)
 OBJS   = $(SRCS:.c=.o)
 
 9mm: $(OBJS)
-	$(CC) -o 9mm $(OBJS) $(LDFLAGS)
+	$(CC) -Isrc -o 9mm $(OBJS) $(LDFLAGS)
 
-$(OBJS): 9mm.h
+$(OBJS): src/9mm.h
 
 test: 9mm
 	./9mm -test
 	./test.sh
 
 clean:
-	rm -f 9mm *.o *~ tmp tmp.s
+	rm -f 9mm src/*.o *~ tmp tmp.s
