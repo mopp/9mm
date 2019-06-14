@@ -145,16 +145,16 @@ void tokenize()
         }
 
         // find the variable name.
-        char* variable_name_head = p;
+        char* name = p;
         while (is_alnum(*p)) {
             ++p;
         }
 
-        if (variable_name_head != p) {
-            size_t n = p - variable_name_head;
+        if (name != p) {
+            size_t n = p - name;
             token->ty = TK_IDENT;
-            token->name = strndup(variable_name_head, n);
-            token->input = variable_name_head;
+            token->name = strndup(name, n);
+            token->input = name;
             vec_push(tokens, token);
             continue;
         }
@@ -188,6 +188,7 @@ void tokenize()
 // unary      = ("+" | "-")? term
 // term       = num |
 //              ident ("(" (expr ("," expr)*)* ")")? |
+//              "int" ident |
 //              "(" expr ")
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
@@ -475,12 +476,12 @@ static Node* term()
         return new_node_num(ts[pos++]->val);
     } else if (ts[pos]->ty == TK_IDENT) {
         Node* node = malloc(sizeof(Node));
-        char* ident_name = ts[pos++]->name;
+        char* ident = ts[pos++]->name;
 
         if (consume('(')) {
             // 関数呼び出し
             NodeCall* node_call = malloc(sizeof(NodeCall));
-            node_call->name = ident_name;
+            node_call->name = ident;
             node_call->arguments = new_vector();
 
             while (1) {
@@ -497,19 +498,24 @@ static Node* term()
 
             node->ty = ND_CALL;
             node->type_depend_value = node_call;
-        } else {
-            // ローカル変数
-            void* offset = map_get(variable_name_map, ident_name);
-            if (NULL == offset) {
-                // スタック領域を割り当てる.
-                ++count_local_variables;
-                node->ty = ND_LVAR_NEW;
-                node->offset = count_local_variables * 8;
-                map_put(variable_name_map, ident_name, (void*)node->offset);
-            } else {
-                node->ty = ND_LVAR;
-                node->offset = (uintptr_t)offset;
+        } else if (strcmp(ident, "int") == 0) {
+            if (ts[pos]->ty != TK_IDENT) {
+                error_at(ts[pos]->input, "変数名が識別子ではない");
             }
+
+            // ローカル変数の宣言.
+            ++count_local_variables;
+            node->ty = ND_LVAR_NEW;
+            node->offset = count_local_variables * 8;
+            map_put(variable_name_map, ts[pos++]->name, (void*)node->offset);
+        } else {
+            // ローカル変数の参照.
+            void* offset = map_get(variable_name_map, ident);
+            if (NULL == offset) {
+                error_at(ts[pos - 1]->input, "宣言されていない変数を使用した");
+            }
+            node->ty = ND_LVAR;
+            node->offset = (uintptr_t)offset;
         }
 
         return node;

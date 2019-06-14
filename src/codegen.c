@@ -6,15 +6,11 @@ static char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 // 与えられたノードの持つ変数のアドレスをスタックにpushする
 static void gen_lval(Node* node)
 {
-    if (node->ty != ND_LVAR && node->ty != ND_LVAR_NEW)
+    if (node->ty != ND_LVAR) {
         error("代入の左辺値が変数ではありません");
-
-    printf("  # LVAR\n");
-
-    if (node->ty == ND_LVAR_NEW) {
-        printf("  sub rsp, 8\n");
     }
 
+    printf("  # Reference local var\n");
     printf("  mov rax, rbp\n");
     printf("  sub rax, %zd\n", node->offset);
     printf("  push rax\n");
@@ -168,6 +164,14 @@ void gen(Node* node)
 
     if (node->ty == ND_NUM) {
         printf("  push %d\n", node->val);
+        return;
+    }
+
+    if (node->ty == ND_LVAR_NEW) {
+        printf("  # Create local var\n");
+        printf("  sub rsp, 8\n");
+        // スタック調節のために空の値を入れておく.
+        printf("  push 0\n");
         return;
     }
 
