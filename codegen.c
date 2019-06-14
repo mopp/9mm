@@ -1,6 +1,8 @@
 #include "9mm.h"
 #include <stdio.h>
 
+static char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 // 与えられたノードの持つ変数のアドレスをスタックにpushする
 static void gen_lval(Node* node)
 {
@@ -20,10 +22,35 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_FUNCTION) {
+        NodeFunction* node_function = node->type_depend_value;
+
+        printf("%s:\n", node_function->name);
+
+        // プロローグ.
+        printf("  push rbp\n");
+        printf("  mov rbp, rsp\n");
+
+        // 引数をスタックへ書き出し.
+        for (size_t i = 0; i < node_function->count_local_variables; i++) {
+            printf("  push %s\n", regs[i]);
+        }
+
+        // 本体のblockを展開.
+        // 結果はraxに格納済み.
+        gen(node->lhs);
+
+        // エピローグ.
+        printf("  mov rsp, rbp\n");
+        printf("  pop rbp\n");
+        printf("  ret\n");
+
+        return;
+    }
+
     if (node->ty == ND_CALL) {
         NodeCall* node_call = node->type_depend_value;
 
-        char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
         Vector* args = node_call->arguments;
         if (6 < args->len) {
             error("6個より多い引数には対応していない");

@@ -7,6 +7,8 @@
 
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
+static Node* function();
+static Node* block();
 static Node* stmt();
 static Node* expr();
 static Node* assign();
@@ -32,10 +34,10 @@ int pos;
 Node* code[100];
 
 // 変数の個数
-size_t count_local_variables;
+static size_t count_local_variables;
 
 // 変数名 -> offset
-Map* variable_name_map;
+static Map* variable_name_map = NULL;
 
 // user_inputが指している文字列を
 // トークンに分割してtokensに保存する
@@ -167,13 +169,15 @@ void tokenize()
     vec_push(tokens, token);
 }
 
-// program    = stmt*
-// stmt       = expr ";" |
-//              "{" stmt* "}" |
-//              "if" "(" expr ")" stmt ("else" stmt)? |
+// program    = function*
+// function   = ident "(" (ident ("," ident)*)* ")" block
+// block      = "{" stmt* "}"
+// stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
 //              "while" "(" expr ")" stmt |
 //              "for" "(" expr? ";" expr? ")" stmt |
+//              block |
 //              "return" expr ";"
+//              expr ";"
 // expr       = assign
 // assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
@@ -192,9 +196,83 @@ void program()
     int i = 0;
     Token** ts = (Token**)(tokens->data);
     while (ts[pos]->ty != TK_EOF) {
-        code[i++] = stmt();
+        code[i++] = function();
     }
     code[i] = NULL;
+}
+
+static Node* function()
+{
+    Token** ts = (Token**)(tokens->data);
+    if (ts[pos]->ty != TK_IDENT) {
+        error_at(ts[pos]->input, "先頭が関数名ではない");
+    }
+
+    NodeFunction* node_function = malloc(sizeof(NodeFunction));
+    node_function->variable_name_map = new_map();
+    node_function->count_local_variables = 0;
+
+    // 関数名を取得.
+    node_function->name = ts[pos++]->name;
+
+    if (!consume('(')) {
+        error_at(ts[pos]->input, "関数の(が無い");
+    }
+
+    // 仮引数を読み込む
+    while (1) {
+        if (consume(')')) {
+            break;
+        } else if (consume(TK_EOF)) {
+            error_at(ts[pos]->input, "関数の)が無い");
+        } else {
+            if (ts[pos]->ty != TK_IDENT) {
+                error_at(ts[pos]->input, "関数の引数が識別子ではない");
+            }
+            // 引数を格納.
+            void* offset = (void*)(++node_function->count_local_variables * 8);
+            map_put(node_function->variable_name_map, ts[pos++]->name, offset);
+
+            // 引数が更に合ったときのために','を消費しておく.
+            consume(',');
+        }
+    }
+
+    // ローカル変数のparseのために切り替える.
+    count_local_variables = node_function->count_local_variables;
+    variable_name_map = node_function->variable_name_map;
+
+    Node* node = new_node(ND_FUNCTION, block(), NULL);
+    node->type_depend_value = node_function;
+
+    // 戻す.
+    node_function->count_local_variables = count_local_variables;
+    variable_name_map = NULL;
+
+    return node;
+}
+
+static Node* block()
+{
+    Token** ts = (Token**)(tokens->data);
+
+    if (!consume('{')) {
+        error_at(ts[pos]->input, "ブロックの{が必要");
+    }
+
+    Vector* stmts = new_vector();
+    while (!consume('}')) {
+        if (consume(TK_EOF)) {
+            error_at(ts[pos]->input, "ブロックが閉じられていない");
+        }
+
+        vec_push(stmts, stmt());
+    }
+
+    Node* node = new_node(ND_BLOCK, NULL, NULL);
+    node->type_depend_value = stmts;
+
+    return node;
 }
 
 static Node* stmt()
@@ -277,23 +355,8 @@ static Node* stmt()
         node = malloc(sizeof(Node));
         node->ty = ND_FOR;
         node->type_depend_value = node_for;
-    } else if (consume('{')) {
-        // block
-        Vector* stmts = new_vector();
-
-        while (!consume('}')) {
-            if (consume(TK_EOF)) {
-                error_at(ts[pos]->input, "ブロックが閉じられていない");
-            }
-
-            vec_push(stmts, stmt());
-        }
-
-        node = malloc(sizeof(Node));
-        node->ty = ND_BLOCK;
-        node->lhs = NULL;
-        node->rhs = NULL;
-        node->type_depend_value = stmts;
+    } else if (ts[pos]->ty == '{') {
+        node = block();
     } else {
         if (consume(TK_RETURN)) {
             node = malloc(sizeof(Node));

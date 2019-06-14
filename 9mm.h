@@ -15,6 +15,7 @@ enum {
     ND_FOR,      // for
     ND_BLOCK,    // "{" stmt* "}"
     ND_CALL,     // 関数呼び出し
+    ND_FUNCTION, // 関数定義
 
     // トークンの型を表す値
     TK_RETURN,
@@ -76,6 +77,12 @@ typedef struct {
     Vector* arguments;
 } NodeCall;
 
+typedef struct {
+    char* name;
+    size_t count_local_variables;
+    Map* variable_name_map;
+} NodeFunction;
+
 // main.c
 void error_at(char*, char*);
 void error(char*, ...);
@@ -85,8 +92,6 @@ extern char* user_input;
 extern Vector* tokens;
 extern int pos;
 extern Node* code[100];
-extern size_t count_local_variables;
-extern Map* variable_name_map;
 void tokenize();
 void program();
 
