@@ -31,6 +31,24 @@ enum {
     TK_GE,    // >=
 };
 
+typedef struct {
+    int ty;      // トークンの型
+    int val;     // tyがTK_NUMの場合、その数値
+    char* name;  // tyがTK_IDENTの場合、その名前
+    char* input; // トークン文字列（エラーメッセージ用）
+} Token;
+
+typedef struct {
+    void** data;
+    int capacity;
+    int len;
+} Vector;
+
+typedef struct {
+    Vector* keys;
+    Vector* vals;
+} Map;
+
 typedef struct Node {
     int ty;                  // 演算子、ND_NUMかND_LVAR
     struct Node* lhs;        // 左辺
@@ -54,22 +72,9 @@ typedef struct {
 } NodeFor;
 
 typedef struct {
-    int ty;      // トークンの型
-    int val;     // tyがTK_NUMの場合、その数値
-    char* name;  // tyがTK_IDENTの場合、その名前
-    char* input; // トークン文字列（エラーメッセージ用）
-} Token;
-
-typedef struct {
-    void** data;
-    int capacity;
-    int len;
-} Vector;
-
-typedef struct {
-    Vector* keys;
-    Vector* vals;
-} Map;
+    char* name;
+    Vector* arguments;
+} NodeCall;
 
 // main.c
 void error_at(char*, char*);

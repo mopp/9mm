@@ -21,12 +21,26 @@ static void gen_lval(Node* node)
 void gen(Node* node)
 {
     if (node->ty == ND_CALL) {
-        char* func_name = node->type_depend_value;
+        NodeCall* node_call = node->type_depend_value;
+
+        char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+        Vector* args = node_call->arguments;
+        if (6 < args->len) {
+            error("6個より多い引数には対応していない");
+        }
+
+        for (size_t i = 0; i < args->len; i++) {
+            gen(args->data[i]);
+        }
+
+        printf("  # call %s\n", node_call->name);
+        for (size_t i = 0; i < args->len; i++) {
+            printf("  pop %s\n", regs[i]);
+        }
 
         // RSPが16の倍数になるようにする.
         printf("  and rsp, -16\n");
-
-        printf("  call %s\n", func_name);
+        printf("  call %s\n", node_call->name);
         printf("  push rax\n");
 
         return;

@@ -125,7 +125,7 @@ void tokenize()
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',') {
             token->ty = *p;
             token->input = p;
             vec_push(tokens, token);
@@ -182,7 +182,7 @@ void tokenize()
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? term
 // term       = num |
-//              ident ("(" ")")? |
+//              ident ("(" (expr ("," expr)*)* ")")? |
 //              "(" expr ")
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
@@ -415,11 +415,24 @@ static Node* term()
 
         if (consume('(')) {
             // 関数呼び出し
-            node->ty = ND_CALL;
-            node->type_depend_value = ident_name;
-            if (!consume(')')) {
-                error_at(ts[pos]->input, "関数呼び出しの)が無い");
+            NodeCall* node_call = malloc(sizeof(NodeCall));
+            node_call->name = ident_name;
+            node_call->arguments = new_vector();
+
+            while (1) {
+                if (consume(')')) {
+                    break;
+                } else {
+                    // 引数を格納.
+                    vec_push(node_call->arguments, expr());
+
+                    // 引数が更に合ったときのために','を消費しておく.
+                    consume(',');
+                }
             }
+
+            node->ty = ND_CALL;
+            node->type_depend_value = node_call;
         } else {
             // ローカル変数
             void* offset = map_get(variable_name_map, ident_name);

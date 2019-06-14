@@ -64,5 +64,7 @@ try 9 'for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}}'
 try 9 'for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}}'
 try 0 'foo();'
 try 1 'for (i = 0; i<3; i=i+1) { foo(); } return 1;'
+try 3 'a = 1; b = 2; add(a, b);'
+try 3 'a = 1; b = 2; add(a, b);'
 
 echo OK
