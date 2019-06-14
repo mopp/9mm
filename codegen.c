@@ -83,6 +83,8 @@ void gen(Node* node)
             gen(stmts->data[i]);
             printf("  pop rax\n");
         }
+        // 最後のものを結果として扱う.
+        printf("  push rax\n");
         return;
     }
 
