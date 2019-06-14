@@ -171,7 +171,7 @@ void tokenize()
 }
 
 // program    = function*
-// function   = ident "(" (ident ("," ident)*)* ")" block
+// function   = ident "(" ("int" ident ("," "int" ident)*)* ")" block
 // block      = "{" stmt* "}"
 // stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
 //              "while" "(" expr ")" stmt |
@@ -228,9 +228,15 @@ static Node* function()
         } else if (consume(TK_EOF)) {
             error_at(ts[pos]->input, "関数の)が無い");
         } else {
+            if ((ts[pos]->ty != TK_IDENT) || (strcmp(ts[pos]->name, "int") != 0)) {
+                error_at(ts[pos]->input, "関数の引数の型がintではない");
+            }
+            ++pos;
+
             if (ts[pos]->ty != TK_IDENT) {
                 error_at(ts[pos]->input, "関数の引数が識別子ではない");
             }
+
             // 引数を格納.
             void* offset = (void*)(++node_function->count_local_variables * 8);
             map_put(node_function->variable_name_map, ts[pos++]->name, offset);
