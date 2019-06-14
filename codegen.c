@@ -101,6 +101,8 @@ void gen(Node* node)
 
         if (node_if_else->else_body == NULL) {
             printf("  .L_else_%p:\n", node_if_else);
+            // 空の結果を入れておく.
+            printf("  push 0\n");
         } else {
             printf("  jmp .L_if_end_%p\n", node_if_else);
             printf("  .L_else_%p:\n", node_if_else);

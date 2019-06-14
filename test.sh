@@ -5,7 +5,7 @@ try() {
     input="$2"
 
     ./9mm "$input" >tmp.s
-    gcc -o tmp tmp.s lib.o
+    gcc -g -o tmp tmp.s lib.o
     ./tmp
     actual="$?"
 
@@ -65,8 +65,12 @@ try 9  'main() { for (i = 0; i<10; i=i+1) { if (i == 9) {return i;}} }'
 try 0  'main() { foo(); }'
 try 1  'main() { for (i = 0; i<3; i=i+1) { foo(); } return 1; }'
 try 3  'main() { a = 1; b = 2; add(a, b); }'
-try 3  'main() { a = 1; b = 2; add(a, b); }'
 try 0  'main() { return 0; }'
 try 2  'main() { return bar(1, 1); } bar(x, y) { return x + y;}'
-
-echo OK
+try 0  'main() { return fib(0); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 1  'main() { return fib(1); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 1  'main() { return fib(2); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 2  'main() { return fib(3); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 3  'main() { return fib(4); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 5  'main() { return fib(5); } fib(n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
+try 3  'main() { return f(0); } f(n) { if (n == 3) { return n; } return f(n+1); }'
