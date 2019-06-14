@@ -24,14 +24,14 @@ static int is_alnum(char);
 // 入力プログラム
 char* user_input;
 
-// トークナイズした結果のトークン列
-Vector* tokens = NULL;
-
-// 現在読んでいるトークンの位置.
-int pos;
-
 // 式の集まり.
 Node* code[100];
+
+// トークナイズした結果のトークン列
+static Vector* tokens = NULL;
+
+// 現在読んでいるトークンの位置.
+static int pos;
 
 // 変数の個数
 static size_t count_local_variables;
@@ -44,6 +44,7 @@ static Map* variable_name_map = NULL;
 void tokenize()
 {
     char* p = user_input;
+    tokens = new_vector();
 
     while (*p) {
         // 空白文字をスキップ

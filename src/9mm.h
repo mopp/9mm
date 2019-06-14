@@ -89,8 +89,6 @@ void error(char*, ...);
 
 // parse.c
 extern char* user_input;
-extern Vector* tokens;
-extern int pos;
 extern Node* code[100];
 void tokenize();
 void program();

@@ -16,8 +16,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    tokens = new_vector();
-
     // トークナイズする
     user_input = argv[1];
     tokenize();
