@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 }
 
 // エラー箇所を報告するための関数
-void error_at(char* loc, char* msg)
+void error_at(char const* loc, char const* msg)
 {
     int pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
@@ -45,7 +45,7 @@ void error_at(char* loc, char* msg)
 
 // エラーを報告するための関数
 // printfと同じ引数を取る
-void error(char* fmt, ...)
+void error(char const* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);

@@ -84,8 +84,8 @@ typedef struct {
 } NodeFunction;
 
 // main.c
-void error_at(char*, char*);
-void error(char*, ...);
+void error_at(char const*, char const*);
+void error(char const*, ...);
 
 // parse.c
 extern char* user_input;
