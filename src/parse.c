@@ -128,7 +128,7 @@ void tokenize()
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',') {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',' || *p == '&') {
             token->ty = *p;
             token->input = p;
             vec_push(tokens, token);
@@ -185,10 +185,10 @@ void tokenize()
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 // add        = mul ("+" mul | "-" mul)*
 // mul        = unary ("*" unary | "/" unary)*
-// unary      = ("+" | "-")? term
+// unary      = ("+" | "-" | "&" | "*")? term
 // term       = num |
 //              ident ("(" (expr ("," expr)*)* ")")? |
-//              "int" ident |
+//              "int" ("*") ident |
 //              "(" expr ")
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
@@ -466,6 +466,10 @@ static Node* unary()
         return term();
     if (consume('-'))
         return new_node('-', new_node_num(0), term());
+    if (consume('*'))
+        return new_node(ND_DEREF, term(), NULL);
+    if (consume('&'))
+        return new_node(ND_REF, term(), NULL);
     return term();
 }
 
@@ -473,16 +477,14 @@ static Node* term()
 {
     Token** ts = (Token**)(tokens->data);
 
-    // 次のトークンが'('なら、"(" expr ")"のはず
     if (consume('(')) {
+        // 次のトークンが'('なら、"(" expr ")"のはず
         Node* node = expr();
         if (!consume(')'))
             error_at(ts[pos]->input,
                      "開きカッコに対応する閉じカッコがありません");
         return node;
-    }
-
-    if (ts[pos]->ty == TK_NUM) {
+    } else if (ts[pos]->ty == TK_NUM) {
         // 数値
         return new_node_num(ts[pos++]->val);
     } else if (ts[pos]->ty == TK_IDENT) {
@@ -510,14 +512,28 @@ static Node* term()
             node->ty = ND_CALL;
             node->type_depend_value = node_call;
         } else if (strcmp(ident, "int") == 0) {
+            Type* type = malloc(sizeof(Type));
+            type->ty = INT;
+            type->ptr_to = NULL;
+
+            while (consume('*')) {
+                // ポインタ型の解析
+                Type* t = malloc(sizeof(Type));
+                t->ty = PTR;
+                t->ptr_to = type;
+                type = t;
+            }
+
             if (ts[pos]->ty != TK_IDENT) {
                 error_at(ts[pos]->input, "変数名が識別子ではない");
+                *(int*)1 = 10;
             }
 
             // ローカル変数の宣言.
             ++count_local_variables;
             node->ty = ND_LVAR_NEW;
             node->offset = count_local_variables * 8;
+            node->type_depend_value = type;
             map_put(variable_name_map, ts[pos++]->name, (void*)node->offset);
         } else {
             // ローカル変数の参照.

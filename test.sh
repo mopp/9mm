@@ -74,3 +74,4 @@ try 2  'int main() { return fib(3); } int fib(int n) { if (n <= 1) { return n; }
 try 3  'int main() { return fib(4); } int fib(int n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
 try 5  'int main() { return fib(5); } int fib(int n) { if (n <= 1) { return n; } return fib(n - 2) + fib(n - 1); }'
 try 3  'int main() { return f(0); } int f(int n) { if (n == 3) { return n; } return f(n+1); }'
+try 3  'int main() { int x; x=3; int* y; y=&x; return *y; }'

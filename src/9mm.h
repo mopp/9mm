@@ -16,6 +16,8 @@ enum {
     ND_BLOCK,    // "{" stmt* "}"
     ND_CALL,     // 関数呼び出し
     ND_FUNCTION, // 関数定義
+    ND_REF,      // reference
+    ND_DEREF,    // dereference
 
     // トークンの型を表す値
     TK_RETURN,
@@ -82,6 +84,12 @@ typedef struct {
     size_t count_local_variables;
     Map* variable_name_map;
 } NodeFunction;
+
+typedef struct Type {
+    enum { INT,
+           PTR } ty;
+    struct Type* ptr_to;
+} Type;
 
 // main.c
 void error_at(char const*, char const*);

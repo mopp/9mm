@@ -18,6 +18,21 @@ static void gen_lval(Node* node)
 
 void gen(Node* node)
 {
+    if (node->ty == ND_REF) {
+        if (node->lhs->ty != ND_LVAR) {
+            error("変数以外のアドレスは取得できません");
+        }
+        gen_lval(node->lhs);
+        return;
+    }
+
+    if (node->ty == ND_DEREF) {
+        gen(node->lhs);
+        printf("  pop rax\n");
+        printf("  push [rax]\n");
+        return;
+    }
+
     if (node->ty == ND_FUNCTION) {
         NodeFunction* node_function = node->type_depend_value;
 
