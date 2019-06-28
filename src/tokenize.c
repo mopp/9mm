@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define is_eq(str, c_str) (strncmp((str), (c_str), sizeof((c_str)) - 1) == 0)
 
 static int is_alnum(char);
 
@@ -24,7 +25,7 @@ Vector const* tokenize(char const* p)
         Token* token = malloc(sizeof(Token));
 
         // NOTE: "return "との比較では対応出来ないケースがあるか考える.
-        if ((strncmp(p, "return", 6) == 0) && !is_alnum(p[6])) {
+        if (is_eq(p, "return") && !is_alnum(p[6])) {
             token->ty = TK_RETURN;
             token->input = p;
             vec_push(tokens, token);
@@ -32,7 +33,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if ((strncmp(p, "if", 2) == 0) && !is_alnum(p[2])) {
+        if (is_eq(p, "if") && !is_alnum(p[2])) {
             token->ty = TK_IF;
             token->input = p;
             vec_push(tokens, token);
@@ -40,7 +41,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if ((strncmp(p, "else", 4) == 0) && !is_alnum(p[4])) {
+        if (is_eq(p, "else") && !is_alnum(p[4])) {
             token->ty = TK_ELSE;
             token->input = p;
             vec_push(tokens, token);
@@ -48,7 +49,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if ((strncmp(p, "while", 5) == 0) && !is_alnum(p[5])) {
+        if (is_eq(p, "while") && !is_alnum(p[5])) {
             token->ty = TK_WHILE;
             token->input = p;
             vec_push(tokens, token);
@@ -56,7 +57,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if ((strncmp(p, "for", 3) == 0) && !is_alnum(p[3])) {
+        if (is_eq(p, "for") && !is_alnum(p[3])) {
             token->ty = TK_FOR;
             token->input = p;
             vec_push(tokens, token);
@@ -64,7 +65,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if (strncmp(p, "==", 2) == 0) {
+        if (is_eq(p, "==")) {
             token->ty = TK_EQ;
             token->input = p;
             vec_push(tokens, token);
@@ -72,7 +73,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if (strncmp(p, "!=", 2) == 0) {
+        if (is_eq(p, "!=")) {
             token->ty = TK_NE;
             token->input = p;
             vec_push(tokens, token);
@@ -80,7 +81,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if (strncmp(p, "<=", 2) == 0) {
+        if (is_eq(p, "<=")) {
             token->ty = TK_LE;
             token->input = p;
             vec_push(tokens, token);
@@ -88,7 +89,7 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if (strncmp(p, ">=", 2) == 0) {
+        if (is_eq(p, ">=")) {
             token->ty = TK_GE;
             token->input = p;
             vec_push(tokens, token);
@@ -96,7 +97,20 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',' || *p == '&') {
+        if (*p == '+' ||
+            *p == '-' ||
+            *p == '*' ||
+            *p == '/' ||
+            *p == '(' ||
+            *p == ')' ||
+            *p == '<' ||
+            *p == '>' ||
+            *p == ';' ||
+            *p == '=' ||
+            *p == '{' ||
+            *p == '}' ||
+            *p == ',' ||
+            *p == '&') {
             token->ty = *p;
             token->input = p;
             vec_push(tokens, token);
