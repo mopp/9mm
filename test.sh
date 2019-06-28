@@ -4,13 +4,14 @@ try() {
     expected="$1"
     input="$2"
 
+    printf "./9mm '$input'"
     ./9mm "$input" >tmp.s
     gcc -g -o tmp tmp.s src/lib.o
     ./tmp
     actual="$?"
 
     if [ "$actual" = "$expected" ]; then
-        echo "$input => $actual"
+        echo " -> $actual"
     else
         echo "$expected expected, but got $actual"
         exit 1
