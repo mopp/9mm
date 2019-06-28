@@ -86,9 +86,11 @@ typedef struct Type {
 void error_at(char const*, char const*);
 void error(char const*, ...);
 
+// tokenize.c
+Vector const* tokenize(char const*);
+
 // parse.c
-void tokenize(char const*);
-Node const* const* program();
+Node const* const* program(Vector const*);
 
 // codegen.c
 void gen(Node const*);

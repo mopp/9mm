@@ -1,8 +1,4 @@
-#define _XOPEN_SOURCE 700
-
 #include "9mm.h"
-#include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,14 +17,13 @@ static Node* unary();
 static Node* term();
 static Node* decl_var();
 static int consume(int);
-static int is_alnum(char);
 static int is_type();
 
 // 式の集まり.
 Node* code[100];
 
 // トークナイズした結果のトークン列
-static Vector* tokens = NULL;
+static Vector const* tokens = NULL;
 
 // 現在読んでいるトークンの位置.
 static int pos;
@@ -39,135 +34,6 @@ static size_t count_local_variables;
 // 変数名 -> offset
 static Map* variable_name_map = NULL;
 
-// user_inputが指している文字列を
-// トークンに分割してtokensに保存する
-void tokenize(char const* p)
-{
-    tokens = new_vector();
-
-    while (*p) {
-        // 空白文字をスキップ
-        if (isspace(*p)) {
-            p++;
-            continue;
-        }
-
-        Token* token = malloc(sizeof(Token));
-
-        // NOTE: "return "との比較では対応出来ないケースがあるか考える.
-        if ((strncmp(p, "return", 6) == 0) && !is_alnum(p[6])) {
-            token->ty = TK_RETURN;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 6;
-            continue;
-        }
-
-        if ((strncmp(p, "if", 2) == 0) && !is_alnum(p[2])) {
-            token->ty = TK_IF;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 2;
-            continue;
-        }
-
-        if ((strncmp(p, "else", 4) == 0) && !is_alnum(p[4])) {
-            token->ty = TK_ELSE;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 4;
-            continue;
-        }
-
-        if ((strncmp(p, "while", 5) == 0) && !is_alnum(p[5])) {
-            token->ty = TK_WHILE;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 5;
-            continue;
-        }
-
-        if ((strncmp(p, "for", 3) == 0) && !is_alnum(p[3])) {
-            token->ty = TK_FOR;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 3;
-            continue;
-        }
-
-        if (strncmp(p, "==", 2) == 0) {
-            token->ty = TK_EQ;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 2;
-            continue;
-        }
-
-        if (strncmp(p, "!=", 2) == 0) {
-            token->ty = TK_NE;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 2;
-            continue;
-        }
-
-        if (strncmp(p, "<=", 2) == 0) {
-            token->ty = TK_LE;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 2;
-            continue;
-        }
-
-        if (strncmp(p, ">=", 2) == 0) {
-            token->ty = TK_GE;
-            token->input = p;
-            vec_push(tokens, token);
-            p += 2;
-            continue;
-        }
-
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')' || *p == '<' || *p == '>' || *p == ';' || *p == '=' || *p == '{' || *p == '}' || *p == ',' || *p == '&') {
-            token->ty = *p;
-            token->input = p;
-            vec_push(tokens, token);
-            p++;
-            continue;
-        }
-
-        if (isdigit(*p)) {
-            token->ty = TK_NUM;
-            token->input = p;
-            token->val = strtol(p, (char**)&p, 10);
-            vec_push(tokens, token);
-            continue;
-        }
-
-        // find the variable name.
-        char const* name = p;
-        while (is_alnum(*p)) {
-            ++p;
-        }
-
-        if (name != p) {
-            size_t n = p - name;
-            token->ty = TK_IDENT;
-            token->name = strndup(name, n);
-            token->input = name;
-            vec_push(tokens, token);
-            continue;
-        }
-
-        free(token);
-
-        error_at(p, "トークナイズできません");
-    }
-
-    Token* token = malloc(sizeof(Token));
-    token->ty = TK_EOF;
-    token->input = p;
-    vec_push(tokens, token);
-}
 
 // program    = function*
 // function   = "int" ident "(" (decl_var ("," decl_var)*)* ")" block
@@ -193,8 +59,10 @@ void tokenize(char const* p)
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
 // num        = [0-9]+
-Node const* const* program()
+Node const* const* program(Vector const* t)
 {
+    // FIXME:
+    tokens = t;
     Node const** code = malloc(sizeof(Node*) * 64);
     int i = 0;
     Token** ts = (Token**)(tokens->data);
@@ -583,14 +451,6 @@ static Node* new_node_num(int val)
     node->ty = ND_NUM;
     node->val = val;
     return node;
-}
-
-static int is_alnum(char c)
-{
-    return ('a' <= c && c <= 'z') ||
-           ('A' <= c && c <= 'Z') ||
-           ('0' <= c && c <= '9') ||
-           (c == '_');
 }
 
 static int is_type()

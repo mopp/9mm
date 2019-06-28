@@ -20,8 +20,8 @@ int main(int argc, char const* const* argv)
 
     // トークナイズする
     input = argv[1];
-    tokenize(input);
-    Node const* const* code = program();
+    Vector const* tokens = tokenize(input);
+    Node const* const* code = program(tokens);
 
     // アセンブリの前半部分を出力
     printf(".intel_syntax noprefix\n");
