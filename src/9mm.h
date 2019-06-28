@@ -1,6 +1,8 @@
 #ifndef H_9MM
 #define H_9MM
 
+
+#include "container.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -35,22 +37,11 @@ enum {
 };
 
 typedef struct {
-    int ty;      // トークンの型
-    int val;     // tyがTK_NUMの場合、その数値
+    int ty;            // トークンの型
+    int val;           // tyがTK_NUMの場合、その数値
     char const* name;  // tyがTK_IDENTの場合、その名前
     char const* input; // トークン文字列（エラーメッセージ用）
 } Token;
-
-typedef struct {
-    void** data;
-    int capacity;
-    int len;
-} Vector;
-
-typedef struct {
-    Vector* keys;
-    Vector* vals;
-} Map;
 
 typedef struct Node {
     int ty;                  // 演算子、ND_NUMかND_LVAR
@@ -101,13 +92,6 @@ Node const* const* program();
 
 // codegen.c
 void gen(Node const*);
-
-// container.c
-Vector* new_vector();
-void vec_push(Vector*, void*);
-Map* new_map();
-void map_put(Map*, char const*, void*);
-void* map_get(Map*, char const*);
 
 void runtest();
 
