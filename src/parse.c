@@ -35,30 +35,6 @@ static size_t count_local_variables;
 static Map* variable_name_map = NULL;
 
 
-// program    = function*
-// function   = "int" ident "(" (decl_var ("," decl_var)*)* ")" block
-// block      = "{" stmt* "}"
-// stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
-//              "while" "(" expr ")" stmt |
-//              "for" "(" expr? ";" expr? ")" stmt |
-//              block |
-//              "return" expr ";"
-//              expr ";"
-// expr       = assign
-// assign     = equality ("=" assign)?
-// equality   = relational ("==" relational | "!=" relational)*
-// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
-// add        = mul ("+" mul | "-" mul)*
-// mul        = unary ("*" unary | "/" unary)*
-// unary      = ("+" | "-" | "&" | "*")? term
-// term       = num |
-//              ident ("(" (expr ("," expr)*)* ")")? |
-//              decl_var |
-//              "(" expr ")
-// decl_var   = type ("*")* ident
-// ident      = chars (chars | num)+
-// chars      = [a-zA-Z_]
-// num        = [0-9]+
 Node const* const* program(Vector const* t)
 {
     // FIXME:
