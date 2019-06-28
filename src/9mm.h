@@ -88,8 +88,8 @@ typedef struct Type {
 } Type;
 
 // main.c
-void error_at(char const*, char const*);
-void error(char const*, ...);
+_Noreturn void error_at(char const*, char const*);
+_Noreturn void error(char const*, ...);
 
 // tokenize.c
 Vector const* tokenize(char const*);
