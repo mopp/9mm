@@ -3,6 +3,7 @@
 #include "9mm.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 static Node* new_node(int, Node*, Node*);
@@ -18,8 +19,10 @@ static Node* add();
 static Node* mul();
 static Node* unary();
 static Node* term();
+static Node* decl_var();
 static int consume(int);
 static int is_alnum(char);
+static int is_type();
 
 // 入力プログラム
 char* user_input;
@@ -171,7 +174,7 @@ void tokenize()
 }
 
 // program    = function*
-// function   = "int" ident "(" ("int" ident ("," "int" ident)*)* ")" block
+// function   = "int" ident "(" (decl_var ("," decl_var)*)* ")" block
 // block      = "{" stmt* "}"
 // stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
 //              "while" "(" expr ")" stmt |
@@ -188,8 +191,9 @@ void tokenize()
 // unary      = ("+" | "-" | "&" | "*")? term
 // term       = num |
 //              ident ("(" (expr ("," expr)*)* ")")? |
-//              "int" ("*") ident |
+//              decl_var |
 //              "(" expr ")
+// decl_var   = type ("*")* ident
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
 // num        = [0-9]+
@@ -226,6 +230,10 @@ static Node* function()
         error_at(ts[pos]->input, "関数の(が無い");
     }
 
+    // ローカル変数のparseのために切り替える.
+    count_local_variables = node_function->count_local_variables;
+    variable_name_map = node_function->variable_name_map;
+
     // 仮引数を読み込む
     while (1) {
         if (consume(')')) {
@@ -233,27 +241,12 @@ static Node* function()
         } else if (consume(TK_EOF)) {
             error_at(ts[pos]->input, "関数の)が無い");
         } else {
-            if ((ts[pos]->ty != TK_IDENT) || (strcmp(ts[pos]->name, "int") != 0)) {
-                error_at(ts[pos]->input, "関数の引数の型がintではない");
-            }
-            ++pos;
+            free(decl_var());
 
-            if (ts[pos]->ty != TK_IDENT) {
-                error_at(ts[pos]->input, "関数の引数が識別子ではない");
-            }
-
-            // 引数を格納.
-            void* offset = (void*)(++node_function->count_local_variables * 8);
-            map_put(node_function->variable_name_map, ts[pos++]->name, offset);
-
-            // 引数が更に合ったときのために','を消費しておく.
+            // 引数が更にあったときのために','を消費しておく.
             consume(',');
         }
     }
-
-    // ローカル変数のparseのために切り替える.
-    count_local_variables = node_function->count_local_variables;
-    variable_name_map = node_function->variable_name_map;
 
     Node* node = new_node(ND_FUNCTION, block(), NULL);
     node->type_depend_value = node_function;
@@ -511,33 +504,12 @@ static Node* term()
 
             node->ty = ND_CALL;
             node->type_depend_value = node_call;
-        } else if (strcmp(ident, "int") == 0) {
-            Type* type = malloc(sizeof(Type));
-            type->ty = INT;
-            type->ptr_to = NULL;
-
-            while (consume('*')) {
-                // ポインタ型の解析
-                Type* t = malloc(sizeof(Type));
-                t->ty = PTR;
-                t->ptr_to = type;
-                type = t;
-            }
-
-            if (ts[pos]->ty != TK_IDENT) {
-                error_at(ts[pos]->input, "変数名が識別子ではない");
-                *(int*)1 = 10;
-            }
-
-            // ローカル変数の宣言.
-            ++count_local_variables;
-            node->ty = ND_LVAR_NEW;
-            node->offset = count_local_variables * 8;
-            node->type_depend_value = type;
-            map_put(variable_name_map, ts[pos++]->name, (void*)node->offset);
+        } else if (--pos, is_type()) {
+            free(node);
+            node = decl_var();
         } else {
             // ローカル変数の参照.
-            void* offset = map_get(variable_name_map, ident);
+            void* offset = map_get(variable_name_map, ts[pos++]->name);
             if (NULL == offset) {
                 error_at(ts[pos - 1]->input, "宣言されていない変数を使用した");
             }
@@ -552,6 +524,39 @@ static Node* term()
              "数値でも開きカッコでもないトークンです");
 
     return NULL;
+}
+
+static Node* decl_var()
+{
+    Token** ts = (Token**)(tokens->data);
+
+    if (ts[pos]->ty != TK_IDENT) {
+        error_at(ts[pos]->input, "not type");
+    }
+    pos++;
+
+    Type* type = malloc(sizeof(Type));
+    type->ty = INT;
+    type->ptr_to = NULL;
+    while (consume('*')) {
+        // ポインタ型の解析
+        Type* t = malloc(sizeof(Type));
+        t->ty = PTR;
+        t->ptr_to = type;
+        type = t;
+    }
+
+    if (ts[pos]->ty != TK_IDENT) {
+        error_at(ts[pos]->input, "invalid variable name");
+    }
+
+    Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
+    ++count_local_variables;
+    node->offset = count_local_variables * 8;
+    node->type_depend_value = type;
+    map_put(variable_name_map, ts[pos++]->name, (void*)node->offset);
+
+    return node;
 }
 
 // 期待した型であれば1トークン読み進める
@@ -588,4 +593,10 @@ static int is_alnum(char c)
            ('A' <= c && c <= 'Z') ||
            ('0' <= c && c <= '9') ||
            (c == '_');
+}
+
+static int is_type()
+{
+    Token** ts = (Token**)(tokens->data);
+    return ts[pos]->ty == TK_IDENT && strcmp(ts[pos]->name, "int") == 0;
 }
