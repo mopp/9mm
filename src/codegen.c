@@ -32,7 +32,7 @@ void gen(Node const* node)
         printf("  mov rbp, rsp\n");
 
         // 引数をスタックへ書き出し.
-        for (size_t i = 0; i < node_function->count_local_variables; i++) {
+        for (size_t i = 0; i < node_function->context->count_vars; i++) {
             printf("  push %s\n", regs[i]);
         }
 

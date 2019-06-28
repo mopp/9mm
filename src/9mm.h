@@ -71,9 +71,13 @@ typedef struct {
 } NodeCall;
 
 typedef struct {
+    size_t count_vars;
+    Map* var_offset_map; // variable name -> offset.
+} Context;
+
+typedef struct {
     char const* name;
-    size_t count_local_variables;
-    Map* variable_name_map;
+    Context* context;
 } NodeFunction;
 
 typedef struct Type {

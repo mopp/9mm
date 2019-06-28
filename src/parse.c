@@ -29,11 +29,8 @@ static Vector const* token_vector = NULL;
 // 現在読んでいるトークンの位置.
 static int pos;
 
-// 変数の個数
-static size_t count_local_variables;
-
-// 変数名 -> offset
-static Map* variable_name_map = NULL;
+// Current context.
+static Context* context = NULL;
 
 
 Node const* const* program(Vector const* tv)
@@ -64,20 +61,18 @@ static Node* function()
         error_at(tokens[pos]->input, "先頭が関数名ではない");
     }
 
-    NodeFunction* node_function = malloc(sizeof(NodeFunction));
-    node_function->variable_name_map = new_map();
-    node_function->count_local_variables = 0;
-
-    // 関数名を取得.
-    node_function->name = tokens[pos++]->name;
+    char const* name = tokens[pos++]->name;
 
     if (!consume('(')) {
         error_at(tokens[pos]->input, "関数の(が無い");
     }
 
-    // ローカル変数のparseのために切り替える.
-    count_local_variables = node_function->count_local_variables;
-    variable_name_map = node_function->variable_name_map;
+    NodeFunction* node_function = malloc(sizeof(NodeFunction));
+    node_function->name = name;
+    node_function->context = new_context();
+
+    // Switch current context.
+    context = node_function->context;
 
     // 仮引数を読み込む
     while (1) {
@@ -96,9 +91,8 @@ static Node* function()
     Node* node = new_node(ND_FUNCTION, block(), NULL);
     node->type_depend_value = node_function;
 
-    // 戻す.
-    node_function->count_local_variables = count_local_variables;
-    variable_name_map = NULL;
+    // Finish the current context;
+    context = NULL;
 
     return node;
 }
@@ -354,7 +348,7 @@ static Node* term()
             node = decl_var();
         } else {
             // ローカル変数の参照.
-            void const* offset = map_get(variable_name_map, tokens[pos++]->name);
+            void const* offset = map_get(context->var_offset_map, tokens[pos++]->name);
             if (NULL == offset) {
                 error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
@@ -396,10 +390,10 @@ static Node* decl_var()
     }
 
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
-    ++count_local_variables;
-    node->offset = count_local_variables * 8;
+    ++context->count_vars;
+    node->offset = context->count_vars * 8;
     node->type_depend_value = type;
-    map_put(variable_name_map, tokens[pos++]->name, (void*)node->offset);
+    map_put(context->var_offset_map, tokens[pos++]->name, (void*)node->offset);
 
     return node;
 }
@@ -444,7 +438,6 @@ static inline Context* new_context()
 
     context->count_vars = 0;
     context->var_offset_map = new_map();
-    context->var_type_map = new_map();
 
     return context;
 }
