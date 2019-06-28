@@ -73,6 +73,7 @@ typedef struct {
 typedef struct {
     size_t count_vars;
     Map* var_offset_map; // variable name -> offset.
+    Map* var_type_map;   // variable name -> "Type".
 } Context;
 
 typedef struct {

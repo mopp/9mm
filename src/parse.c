@@ -390,10 +390,12 @@ static Node* decl_var()
     }
 
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
-    ++context->count_vars;
-    node->offset = context->count_vars * 8;
-    node->type_depend_value = type;
-    map_put(context->var_offset_map, tokens[pos++]->name, (void*)node->offset);
+    node->offset = ++context->count_vars * 8;
+
+    // Store variable info into the current context.
+    char const* name = tokens[pos++]->name;
+    map_put(context->var_offset_map, name, (void*)node->offset);
+    map_put(context->var_type_map, name, type);
 
     return node;
 }
@@ -438,6 +440,7 @@ static inline Context* new_context()
 
     context->count_vars = 0;
     context->var_offset_map = new_map();
+    context->var_type_map = new_map();
 
     return context;
 }
