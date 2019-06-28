@@ -37,9 +37,11 @@ enum {
 };
 
 typedef struct {
-    int ty;            // トークンの型
-    int val;           // tyがTK_NUMの場合、その数値
-    char const* name;  // tyがTK_IDENTの場合、その名前
+    int ty; // トークンの型
+    union {
+        int val;          // tyがTK_NUMの場合、その数値
+        char const* name; // tyがTK_IDENTの場合、その名前
+    };
     char const* input; // トークン文字列（エラーメッセージ用）
 } Token;
 
