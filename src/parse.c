@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static Node* new_node(int, Node*, Node*);
-static Node* new_node_num(int);
 static Node* function();
 static Node* block();
 static Node* stmt();
@@ -17,13 +15,16 @@ static Node* unary();
 static Node* term();
 static Node* decl_var();
 static int consume(int);
+static Node* new_node(int, Node*, Node*);
+static Node* new_node_num(int);
 static int is_type();
+static inline Context* new_context();
 
 // 式の集まり.
 Node* code[100];
 
 // トークナイズした結果のトークン列
-static Vector const* tokens = NULL;
+static Vector const* token_vector = NULL;
 
 // 現在読んでいるトークンの位置.
 static int pos;
@@ -35,14 +36,15 @@ static size_t count_local_variables;
 static Map* variable_name_map = NULL;
 
 
-Node const* const* program(Vector const* t)
+Node const* const* program(Vector const* tv)
 {
-    // FIXME:
-    tokens = t;
+    token_vector = tv;
+
+    Token** tokens = (Token**)token_vector->data;
+
+    size_t i = 0;
     Node const** code = malloc(sizeof(Node*) * 64);
-    int i = 0;
-    Token** ts = (Token**)(tokens->data);
-    while (ts[pos]->ty != TK_EOF) {
+    while (tokens[pos]->ty != TK_EOF) {
         code[i++] = function();
     }
     code[i] = NULL;
@@ -51,14 +53,15 @@ Node const* const* program(Vector const* t)
 
 static Node* function()
 {
-    Token** ts = (Token**)(tokens->data);
-    if (ts[pos]->ty != TK_IDENT || strcmp(ts[pos]->name, "int") != 0) {
-        error_at(ts[pos]->input, "関数の返り値がintではない");
+    Token** tokens = (Token**)(token_vector->data);
+
+    if (tokens[pos]->ty != TK_IDENT || strcmp(tokens[pos]->name, "int") != 0) {
+        error_at(tokens[pos]->input, "関数の返り値がintではない");
     }
     ++pos;
 
-    if (ts[pos]->ty != TK_IDENT) {
-        error_at(ts[pos]->input, "先頭が関数名ではない");
+    if (tokens[pos]->ty != TK_IDENT) {
+        error_at(tokens[pos]->input, "先頭が関数名ではない");
     }
 
     NodeFunction* node_function = malloc(sizeof(NodeFunction));
@@ -66,10 +69,10 @@ static Node* function()
     node_function->count_local_variables = 0;
 
     // 関数名を取得.
-    node_function->name = ts[pos++]->name;
+    node_function->name = tokens[pos++]->name;
 
     if (!consume('(')) {
-        error_at(ts[pos]->input, "関数の(が無い");
+        error_at(tokens[pos]->input, "関数の(が無い");
     }
 
     // ローカル変数のparseのために切り替える.
@@ -81,7 +84,7 @@ static Node* function()
         if (consume(')')) {
             break;
         } else if (consume(TK_EOF)) {
-            error_at(ts[pos]->input, "関数の)が無い");
+            error_at(tokens[pos]->input, "関数の)が無い");
         } else {
             free(decl_var());
 
@@ -102,16 +105,16 @@ static Node* function()
 
 static Node* block()
 {
-    Token** ts = (Token**)(tokens->data);
+    Token** tokens = (Token**)(token_vector->data);
 
     if (!consume('{')) {
-        error_at(ts[pos]->input, "ブロックの{が必要");
+        error_at(tokens[pos]->input, "ブロックの{が必要");
     }
 
     Vector* stmts = new_vector();
     while (!consume('}')) {
         if (consume(TK_EOF)) {
-            error_at(ts[pos]->input, "ブロックが閉じられていない");
+            error_at(tokens[pos]->input, "ブロックが閉じられていない");
         }
 
         vec_push(stmts, stmt());
@@ -126,18 +129,18 @@ static Node* block()
 static Node* stmt()
 {
     Node* node;
-    Token** ts = (Token**)(tokens->data);
+    Token** tokens = (Token**)(token_vector->data);
 
     if (consume(TK_IF)) {
         if (!consume('(')) {
-            error_at(ts[pos]->input, "ifの条件部は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "ifの条件部は'('から始まらなくてはならない");
         }
 
         NodeIfElse* node_if_else = malloc(sizeof(NodeIfElse));
         node_if_else->condition = expr();
 
         if (!consume(')')) {
-            error_at(ts[pos]->input, "ifの条件部は')'で終わらなければならない");
+            error_at(tokens[pos]->input, "ifの条件部は')'で終わらなければならない");
         }
 
         node_if_else->body = stmt();
@@ -153,7 +156,7 @@ static Node* stmt()
         node->type_depend_value = node_if_else;
     } else if (consume(TK_WHILE)) {
         if (!consume('(')) {
-            error_at(ts[pos]->input, "whileの条件部は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "whileの条件部は'('から始まらなくてはならない");
         }
 
         node = malloc(sizeof(Node));
@@ -161,20 +164,20 @@ static Node* stmt()
         node->lhs = expr(); // 条件式.
 
         if (!consume(')')) {
-            error_at(ts[pos]->input, "whileの条件部は')'で終わらなければならない");
+            error_at(tokens[pos]->input, "whileの条件部は')'で終わらなければならない");
         }
 
         node->rhs = stmt(); // body
     } else if (consume(TK_FOR)) {
         if (!consume('(')) {
-            error_at(ts[pos]->input, "forの直後は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "forの直後は'('から始まらなくてはならない");
         }
 
         NodeFor* node_for = malloc(sizeof(NodeFor));
         if (!consume(';')) {
             node_for->initializing = expr();
             if (!consume(';')) {
-                error_at(ts[pos]->input, "';'ではないトークンです");
+                error_at(tokens[pos]->input, "';'ではないトークンです");
             }
         } else {
             node_for->initializing = NULL;
@@ -183,7 +186,7 @@ static Node* stmt()
         if (!consume(';')) {
             node_for->condition = expr();
             if (!consume(';')) {
-                error_at(ts[pos]->input, "';'ではないトークンです");
+                error_at(tokens[pos]->input, "';'ではないトークンです");
             }
         } else {
             node_for->condition = NULL;
@@ -194,7 +197,7 @@ static Node* stmt()
         } else {
             node_for->updating = expr();
             if (!consume(')')) {
-                error_at(ts[pos]->input, "forは')'で終わらなければならない");
+                error_at(tokens[pos]->input, "forは')'で終わらなければならない");
             }
         }
 
@@ -203,7 +206,7 @@ static Node* stmt()
         node = malloc(sizeof(Node));
         node->ty = ND_FOR;
         node->type_depend_value = node_for;
-    } else if (ts[pos]->ty == '{') {
+    } else if (tokens[pos]->ty == '{') {
         node = block();
     } else {
         if (consume(TK_RETURN)) {
@@ -215,7 +218,7 @@ static Node* stmt()
         }
 
         if (!consume(';')) {
-            error_at(ts[pos]->input, "';'ではないトークンです");
+            error_at(tokens[pos]->input, "';'ではないトークンです");
         }
     }
 
@@ -310,21 +313,21 @@ static Node* unary()
 
 static Node* term()
 {
-    Token** ts = (Token**)(tokens->data);
+    Token** tokens = (Token**)(token_vector->data);
 
     if (consume('(')) {
         // 次のトークンが'('なら、"(" expr ")"のはず
         Node* node = expr();
         if (!consume(')'))
-            error_at(ts[pos]->input,
+            error_at(tokens[pos]->input,
                      "開きカッコに対応する閉じカッコがありません");
         return node;
-    } else if (ts[pos]->ty == TK_NUM) {
+    } else if (tokens[pos]->ty == TK_NUM) {
         // 数値
-        return new_node_num(ts[pos++]->val);
-    } else if (ts[pos]->ty == TK_IDENT) {
+        return new_node_num(tokens[pos++]->val);
+    } else if (tokens[pos]->ty == TK_IDENT) {
         Node* node = malloc(sizeof(Node));
-        char const* ident = ts[pos++]->name;
+        char const* ident = tokens[pos++]->name;
 
         if (consume('(')) {
             // 関数呼び出し
@@ -351,9 +354,9 @@ static Node* term()
             node = decl_var();
         } else {
             // ローカル変数の参照.
-            void const* offset = map_get(variable_name_map, ts[pos++]->name);
+            void const* offset = map_get(variable_name_map, tokens[pos++]->name);
             if (NULL == offset) {
-                error_at(ts[pos - 1]->input, "宣言されていない変数を使用した");
+                error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
             node->ty = ND_LVAR;
             node->offset = (uintptr_t)offset;
@@ -362,7 +365,7 @@ static Node* term()
         return node;
     }
 
-    error_at(ts[pos]->input,
+    error_at(tokens[pos]->input,
              "数値でも開きカッコでもないトークンです");
 
     return NULL;
@@ -370,10 +373,10 @@ static Node* term()
 
 static Node* decl_var()
 {
-    Token** ts = (Token**)(tokens->data);
+    Token** tokens = (Token**)(token_vector->data);
 
-    if (ts[pos]->ty != TK_IDENT) {
-        error_at(ts[pos]->input, "not type");
+    if (tokens[pos]->ty != TK_IDENT) {
+        error_at(tokens[pos]->input, "not type");
     }
     pos++;
 
@@ -388,15 +391,15 @@ static Node* decl_var()
         type = t;
     }
 
-    if (ts[pos]->ty != TK_IDENT) {
-        error_at(ts[pos]->input, "invalid variable name");
+    if (tokens[pos]->ty != TK_IDENT) {
+        error_at(tokens[pos]->input, "invalid variable name");
     }
 
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
     ++count_local_variables;
     node->offset = count_local_variables * 8;
     node->type_depend_value = type;
-    map_put(variable_name_map, ts[pos++]->name, (void*)node->offset);
+    map_put(variable_name_map, tokens[pos++]->name, (void*)node->offset);
 
     return node;
 }
@@ -405,8 +408,8 @@ static Node* decl_var()
 // 成功したら1が返る
 static int consume(int ty)
 {
-    Token** ts = (Token**)(tokens->data);
-    if (ts[pos]->ty != ty)
+    Token** tokens = (Token**)(token_vector->data);
+    if (tokens[pos]->ty != ty)
         return 0;
     pos++;
     return 1;
@@ -431,6 +434,17 @@ static Node* new_node_num(int val)
 
 static int is_type()
 {
-    Token** ts = (Token**)(tokens->data);
-    return ts[pos]->ty == TK_IDENT && strcmp(ts[pos]->name, "int") == 0;
+    Token** tokens = (Token**)(token_vector->data);
+    return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
+}
+
+static inline Context* new_context()
+{
+    Context* context = malloc(sizeof(Context));
+
+    context->count_vars = 0;
+    context->var_offset_map = new_map();
+    context->var_type_map = new_map();
+
+    return context;
 }
