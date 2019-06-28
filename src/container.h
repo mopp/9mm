@@ -1,10 +1,13 @@
 #ifndef H_CONTAINER
 #define H_CONTAINER
 
+
+#include <stddef.h>
+
 typedef struct {
     void** data;
-    int capacity;
-    int len;
+    size_t capacity;
+    size_t len;
 } Vector;
 
 typedef struct {
@@ -18,5 +21,6 @@ void vec_push(Vector*, void*);
 Map* new_map();
 void map_put(Map*, char const*, void*);
 void* map_get(Map*, char const*);
+
 
 #endif
