@@ -96,10 +96,8 @@ void error_at(char const*, char const*);
 void error(char const*, ...);
 
 // parse.c
-extern char* user_input;
-extern Node* code[100];
-void tokenize();
-void program();
+void tokenize(char const*);
+Node const* const* program();
 
 // codegen.c
 void gen(Node*);

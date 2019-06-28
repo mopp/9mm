@@ -2,8 +2,8 @@
 
 #include "9mm.h"
 #include <ctype.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static Node* new_node(int, Node*, Node*);
@@ -24,9 +24,6 @@ static int consume(int);
 static int is_alnum(char);
 static int is_type();
 
-// 入力プログラム
-char* user_input;
-
 // 式の集まり.
 Node* code[100];
 
@@ -44,9 +41,8 @@ static Map* variable_name_map = NULL;
 
 // user_inputが指している文字列を
 // トークンに分割してtokensに保存する
-void tokenize()
+void tokenize(char const* p)
 {
-    char* p = user_input;
     tokens = new_vector();
 
     while (*p) {
@@ -142,7 +138,7 @@ void tokenize()
         if (isdigit(*p)) {
             token->ty = TK_NUM;
             token->input = p;
-            token->val = strtol(p, &p, 10);
+            token->val = strtol(p, (char**)&p, 10);
             vec_push(tokens, token);
             continue;
         }
@@ -197,14 +193,16 @@ void tokenize()
 // ident      = chars (chars | num)+
 // chars      = [a-zA-Z_]
 // num        = [0-9]+
-void program()
+Node const* const* program()
 {
+    Node const** code = malloc(sizeof(Node) * 64);
     int i = 0;
     Token** ts = (Token**)(tokens->data);
     while (ts[pos]->ty != TK_EOF) {
         code[i++] = function();
     }
     code[i] = NULL;
+    return code;
 }
 
 static Node* function()
