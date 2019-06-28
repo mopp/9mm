@@ -16,6 +16,11 @@ Vector* new_vector()
 
 void vec_push(Vector* vec, void* elem)
 {
+    if (vec == NULL) {
+        error("The given map is NULL");
+        return;
+    }
+
     if (vec->capacity == vec->len) {
         vec->capacity *= 2;
         vec->data = realloc(vec->data, sizeof(void*) * vec->capacity);
@@ -39,10 +44,22 @@ void map_put(Map* map, char const* key, void* val)
 
 void* map_get(Map* map, char const* key)
 {
+    if (map == NULL) {
+        error("The given map is NULL");
+        return NULL;
+    }
+
+    Vector const* keys = map->keys;
+    if (keys->len == 0) {
+        return NULL;
+    }
+
     // 逆順に探すことで新しいキーを優先する.
-    for (size_t i = map->keys->len - 1; i >= 0; i--)
-        if (strcmp(map->keys->data[i], key) == 0)
+    for (size_t i = keys->len - 1; 0 <= i; i--) {
+        if (strcmp(keys->data[i], key) == 0) {
             return map->vals->data[i];
+        }
+    }
     return NULL;
 }
 
@@ -92,6 +109,4 @@ void runtest()
 {
     test_vector();
     test_map();
-
-    printf("OK\n");
 }
