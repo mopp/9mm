@@ -3,20 +3,9 @@
 
 static char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
-// 与えられたノードの持つ変数のアドレスをスタックにpushする
-static void gen_lval(Node* node)
-{
-    if (node->ty != ND_LVAR) {
-        error("代入の左辺値が変数ではありません");
-    }
+static void gen_lval(Node const*);
 
-    printf("  # Reference local var\n");
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %zd\n", node->offset);
-    printf("  push rax\n");
-}
-
-void gen(Node* node)
+void gen(Node const* node)
 {
     if (node->ty == ND_REF) {
         if (node->lhs->ty != ND_LVAR) {
@@ -260,5 +249,19 @@ void gen(Node* node)
             printf("  idiv rdi\n");
     }
 
+    printf("  push rax\n");
+}
+
+
+// 与えられたノードの持つ変数のアドレスをスタックにpushする
+static void gen_lval(Node const* node)
+{
+    if (node->ty != ND_LVAR) {
+        error("代入の左辺値が変数ではありません");
+    }
+
+    printf("  # Reference local var\n");
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %zd\n", node->offset);
     printf("  push rax\n");
 }

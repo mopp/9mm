@@ -37,8 +37,8 @@ enum {
 typedef struct {
     int ty;      // トークンの型
     int val;     // tyがTK_NUMの場合、その数値
-    char* name;  // tyがTK_IDENTの場合、その名前
-    char* input; // トークン文字列（エラーメッセージ用）
+    char const* name;  // tyがTK_IDENTの場合、その名前
+    char const* input; // トークン文字列（エラーメッセージ用）
 } Token;
 
 typedef struct {
@@ -75,12 +75,12 @@ typedef struct {
 } NodeFor;
 
 typedef struct {
-    char* name;
+    char const* name;
     Vector* arguments;
 } NodeCall;
 
 typedef struct {
-    char* name;
+    char const* name;
     size_t count_local_variables;
     Map* variable_name_map;
 } NodeFunction;
@@ -100,14 +100,14 @@ void tokenize(char const*);
 Node const* const* program();
 
 // codegen.c
-void gen(Node*);
+void gen(Node const*);
 
 // container.c
 Vector* new_vector();
 void vec_push(Vector*, void*);
 Map* new_map();
-void map_put(Map*, char*, void*);
-void* map_get(Map*, char*);
+void map_put(Map*, char const*, void*);
+void* map_get(Map*, char const*);
 
 void runtest();
 

@@ -144,7 +144,7 @@ void tokenize(char const* p)
         }
 
         // find the variable name.
-        char* name = p;
+        char const* name = p;
         while (is_alnum(*p)) {
             ++p;
         }
@@ -195,7 +195,7 @@ void tokenize(char const* p)
 // num        = [0-9]+
 Node const* const* program()
 {
-    Node const** code = malloc(sizeof(Node) * 64);
+    Node const** code = malloc(sizeof(Node*) * 64);
     int i = 0;
     Token** ts = (Token**)(tokens->data);
     while (ts[pos]->ty != TK_EOF) {
@@ -480,7 +480,7 @@ static Node* term()
         return new_node_num(ts[pos++]->val);
     } else if (ts[pos]->ty == TK_IDENT) {
         Node* node = malloc(sizeof(Node));
-        char* ident = ts[pos++]->name;
+        char const* ident = ts[pos++]->name;
 
         if (consume('(')) {
             // 関数呼び出し
@@ -507,7 +507,7 @@ static Node* term()
             node = decl_var();
         } else {
             // ローカル変数の参照.
-            void* offset = map_get(variable_name_map, ts[pos++]->name);
+            void const* offset = map_get(variable_name_map, ts[pos++]->name);
             if (NULL == offset) {
                 error_at(ts[pos - 1]->input, "宣言されていない変数を使用した");
             }

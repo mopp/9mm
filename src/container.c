@@ -30,13 +30,13 @@ Map* new_map()
     return map;
 }
 
-void map_put(Map* map, char* key, void* val)
+void map_put(Map* map, char const* key, void* val)
 {
-    vec_push(map->keys, key);
+    vec_push(map->keys, (char*)key);
     vec_push(map->vals, val);
 }
 
-void* map_get(Map* map, char* key)
+void* map_get(Map* map, char const* key)
 {
     // 逆順に探すことで新しいキーを優先する.
     for (int i = map->keys->len - 1; i >= 0; i--)
