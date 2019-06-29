@@ -55,11 +55,12 @@ void* map_get(Map* map, char const* key)
     }
 
     // 逆順に探すことで新しいキーを優先する.
-    for (size_t i = keys->len - 1; 0 <= i; i--) {
-        if (strcmp(keys->data[i], key) == 0) {
-            return map->vals->data[i];
+    for (size_t i = keys->len; 0 < i; i--) {
+        if (strcmp(keys->data[i - 1], key) == 0) {
+            return map->vals->data[i - 1];
         }
     }
+
     return NULL;
 }
 
