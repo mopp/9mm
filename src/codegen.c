@@ -3,6 +3,8 @@
 
 static char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
+static Context const* context = NULL;
+
 static void gen_lval(Node const*);
 
 void gen(Node const* node)
@@ -25,12 +27,14 @@ void gen(Node const* node)
     if (node->ty == ND_FUNCTION) {
         printf("%s:\n", node->function->name);
 
+        context = node->function->context;
+
         // プロローグ.
         printf("  push rbp\n");
         printf("  mov rbp, rsp\n");
 
         // 引数をスタックへ書き出し.
-        for (size_t i = 0; i < node->function->context->count_vars; i++) {
+        for (size_t i = 0; i < context->count_vars; i++) {
             printf("  push %s\n", regs[i]);
         }
 
@@ -42,6 +46,8 @@ void gen(Node const* node)
         printf("  mov rsp, rbp\n");
         printf("  pop rbp\n");
         printf("  ret\n");
+
+        context = NULL;
 
         return;
     }
@@ -58,7 +64,7 @@ void gen(Node const* node)
 
         printf("  # call %s\n", node->call->name);
         for (size_t i = 0; i < args->len; i++) {
-                printf("  pop %s\n", regs[args->len - 1 - i]);
+            printf("  pop %s\n", regs[args->len - 1 - i]);
         }
 
         // rspを16バイトアラインメントにする.
@@ -253,6 +259,6 @@ static void gen_lval(Node const* node)
 
     printf("  # Reference local var\n");
     printf("  mov rax, rbp\n");
-    printf("  sub rax, %zd\n", node->offset);
+    printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
     printf("  push rax\n");
 }

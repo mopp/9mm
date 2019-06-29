@@ -86,7 +86,7 @@ typedef struct Node {
     struct Node* rhs; // Right-hand-size
     union {
         int val;          // for "ND_NUM"
-        uintptr_t offset; // for "ND_LVAR"
+        char const* name; // for "ND_LVAR"
         NodeFunction* function;
         Vector* stmts;
         NodeIfElse* if_else;

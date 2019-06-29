@@ -19,6 +19,7 @@ static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static int is_type();
 static inline Context* new_context();
+static inline int get_pointed_type_size(Type const*);
 
 // 式の集まり.
 Node* code[100];
@@ -265,13 +266,48 @@ static Node* add()
 {
     Node* node = mul();
 
+    Token** tokens = (Token**)(token_vector->data);
     for (;;) {
-        if (consume('+'))
-            node = new_node('+', node, mul());
-        else if (consume('-'))
-            node = new_node('-', node, mul());
-        else
+        int op = tokens[pos]->ty;
+
+        if (op == '+' || op == '-') {
+            ++pos;
+            Node* lhs = node;
+            Node* rhs = mul();
+
+            // Add/Sub for pointer type.
+            if (lhs->ty == ND_LVAR && rhs->ty == ND_NUM) {
+                // p + 1 -> p + (1 * sizeof(p))
+                // p - 1 -> p - (1 * sizeof(p))
+                Type const* type = map_get(context->var_type_map, lhs->name);
+                if (type == NULL) {
+                    error_at(tokens[pos]->input, "undefined variable");
+                }
+
+                if (type->ty == PTR) {
+                    rhs = new_node('*', rhs, new_node_num(get_pointed_type_size(type)));
+                }
+            } else if (lhs->ty == ND_NUM && rhs->ty == ND_LVAR) {
+                // 1 + p -> (1 * sizeof(p)) + p
+                // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
+                Type const* type = map_get(context->var_type_map, rhs->name);
+                if (type == NULL) {
+                    error_at(tokens[pos]->input, "undefined variable");
+                }
+
+                if (op == '-') {
+                    error_at(tokens[pos]->input, "invalid operand");
+                }
+
+                if (type->ty == PTR) {
+                    lhs = new_node('*', lhs, new_node_num(get_pointed_type_size(type)));
+                }
+            }
+
+            node = new_node(op, lhs, rhs);
+        } else {
             return node;
+        }
     }
 }
 
@@ -343,12 +379,13 @@ static Node* term()
             node = decl_var();
         } else {
             // ローカル変数の参照.
-            void const* offset = map_get(context->var_offset_map, tokens[pos++]->name);
+            char const* name = tokens[pos++]->name;
+            void const* offset = map_get(context->var_offset_map, name);
             if (NULL == offset) {
                 error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
             node->ty = ND_LVAR;
-            node->offset = (uintptr_t)offset;
+            node->name = name;
         }
 
         return node;
@@ -384,12 +421,13 @@ static Node* decl_var()
         error_at(tokens[pos]->input, "invalid variable name");
     }
 
+    char const* name = tokens[pos++]->name;
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
-    node->offset = ++context->count_vars * 8;
+    node->name = name;
 
     // Store variable info into the current context.
-    char const* name = tokens[pos++]->name;
-    map_put(context->var_offset_map, name, (void*)node->offset);
+    uintptr_t offset = ++context->count_vars * 8;
+    map_put(context->var_offset_map, name, (void*)offset);
     map_put(context->var_type_map, name, type);
 
     return node;
@@ -438,4 +476,19 @@ static inline Context* new_context()
     context->var_type_map = new_map();
 
     return context;
+}
+
+static inline int get_pointed_type_size(Type const* type) {
+    if (type->ty != PTR) {
+        return 0;
+    }
+
+    switch (type->ptr_to->ty) {
+        case INT:
+            return 4;
+        case PTR:
+            return 8;
+        default:
+            return 0;
+    }
 }
