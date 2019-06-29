@@ -72,7 +72,6 @@ static Node* function()
     }
 
     Node* node = new_node(ND_FUNCTION, NULL, NULL);
-    node->function = malloc(sizeof(NodeFunction));
     node->function->name = name;
     node->function->context = new_context();
 
@@ -111,7 +110,6 @@ static Node* block()
     }
 
     Node* node = new_node(ND_BLOCK, NULL, NULL);
-    node->stmts = new_vector();
     while (!consume('}')) {
         if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "ブロックが閉じられていない");
@@ -125,7 +123,7 @@ static Node* block()
 
 static Node* stmt()
 {
-    Node* node;
+    Node* node = NULL;
     Token** tokens = (Token**)(token_vector->data);
 
     if (consume(TK_IF)) {
@@ -133,46 +131,42 @@ static Node* stmt()
             error_at(tokens[pos]->input, "ifの条件部は'('から始まらなくてはならない");
         }
 
-        NodeIfElse* node_if_else = malloc(sizeof(NodeIfElse));
-        node_if_else->condition = expr();
+        node = new_node(ND_IF, NULL, NULL);
+        node->if_else->condition = expr();
 
         if (!consume(')')) {
             error_at(tokens[pos]->input, "ifの条件部は')'で終わらなければならない");
         }
 
-        node_if_else->body = stmt();
+        node->if_else->body = stmt();
 
         if (consume(TK_ELSE)) {
-            node_if_else->else_body = stmt();
+            node->if_else->else_body = stmt();
         } else {
-            node_if_else->else_body = NULL;
+            node->if_else->else_body = NULL;
         }
-
-        node = malloc(sizeof(Node));
-        node->ty = ND_IF;
-        node->if_else = node_if_else;
     } else if (consume(TK_WHILE)) {
         if (!consume('(')) {
             error_at(tokens[pos]->input, "whileの条件部は'('から始まらなくてはならない");
         }
 
-        node = malloc(sizeof(Node));
-        node->ty = ND_WHILE;
-        node->lhs = expr(); // 条件式.
+        // Condition.
+        Node* lhs = expr();
 
         if (!consume(')')) {
             error_at(tokens[pos]->input, "whileの条件部は')'で終わらなければならない");
         }
 
-        node->rhs = stmt(); // body
+        // Body.
+        Node* rhs = stmt();
+
+        node = new_node(ND_WHILE, lhs, rhs);
     } else if (consume(TK_FOR)) {
         if (!consume('(')) {
             error_at(tokens[pos]->input, "forの直後は'('から始まらなくてはならない");
         }
 
-        node = malloc(sizeof(Node));
-        node->ty = ND_FOR;
-        node->fors = malloc(sizeof(NodeFor));
+        node = new_node(ND_FOR, NULL, NULL);
         if (!consume(';')) {
             node->fors->initializing = expr();
             if (!consume(';')) {
@@ -205,9 +199,7 @@ static Node* stmt()
         node = block();
     } else {
         if (consume(TK_RETURN)) {
-            node = malloc(sizeof(Node));
-            node->ty = ND_RETURN;
-            node->lhs = expr();
+            node = new_node(ND_RETURN, expr(), NULL);
         } else {
             node = expr();
         }
@@ -366,14 +358,12 @@ static Node* term()
         // 数値
         return new_node_num(tokens[pos++]->val);
     } else if (tokens[pos]->ty == TK_IDENT) {
-        Node* node = malloc(sizeof(Node));
+        Node* node = NULL;
         char const* ident = tokens[pos++]->name;
 
         if (consume('(')) {
             // 関数呼び出し
             node = new_node(ND_CALL, NULL, NULL);
-            node->ty = ND_CALL;
-            node->call = malloc(sizeof(NodeCall));
             node->call->name = ident;
             node->call->arguments = new_vector();
 
@@ -399,7 +389,7 @@ static Node* term()
                 error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
 
-            node->ty = ND_LVAR;
+            node = new_node(ND_LVAR, NULL, NULL);
             node->name = name;
             node->rtype = map_get(context->var_type_map, name);
         }
@@ -471,6 +461,28 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     node->lhs = lhs;
     node->rhs = rhs;
 
+    // Allocate the type specific object.
+    switch (ty) {
+        case ND_FUNCTION:
+            node->function = malloc(sizeof(NodeFunction));
+            break;
+        case ND_BLOCK:
+            node->stmts = new_vector();
+            break;
+        case ND_IF:
+            node->if_else = malloc(sizeof(NodeIfElse));
+            break;
+        case ND_FOR:
+            node->fors = malloc(sizeof(NodeFor));
+            break;
+        case ND_CALL:
+            node->call = malloc(sizeof(NodeCall));
+            break;
+        default:
+            node->tv = NULL;
+    }
+
+    // Find the type of result of this node.
     switch (ty) {
         case '=':
             node->rtype = rhs->rtype;
@@ -478,6 +490,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
         case '<':
         case '>':
         case ND_CALL:
+        case ND_NUM:
             node->rtype = new_type(INT);
             break;
         case ND_REF:
@@ -504,10 +517,8 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
 
 static Node* new_node_num(int val)
 {
-    Node* node = malloc(sizeof(Node));
-    node->ty = ND_NUM;
+    Node* node = new_node(ND_NUM, NULL, NULL);
     node->val = val;
-    node->rtype = new_type(INT);
     return node;
 }
 
