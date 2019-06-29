@@ -4,8 +4,13 @@ try() {
     expected="$1"
     input="$2"
 
-    printf "./9mm '$input'"
+    echo "./9mm '$input'"
     ./9mm "$input" >tmp.s
+    if [[ "$?" != "0" ]]; then
+        echo 'Compilation error'
+        exit 1
+    fi
+
     gcc -g -o tmp tmp.s src/lib.o
     ./tmp
     actual="$?"
