@@ -477,7 +477,6 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             break;
         case '<':
         case '>':
-        case ND_LVAR_NEW:
         case ND_CALL:
             node->rtype = new_type(INT);
             break;
@@ -494,8 +493,9 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = (lhs->rtype->size < rhs->rtype->size) ? rhs->rtype : lhs->rtype;
             break;
         case ND_LVAR:
-            /* rtype is set outside */
+        case ND_LVAR_NEW:
         default:
+            /* rtype is set outside or unused */
             node->rtype = NULL;
     }
 
