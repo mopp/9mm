@@ -1,4 +1,5 @@
 #include "9mm.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,8 +15,8 @@ static Node* mul();
 static Node* unary();
 static Node* term();
 static Node* decl_var();
-static int consume(int);
-static int is_type();
+static bool consume(int);
+static bool is_type();
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int ty);
@@ -446,18 +447,18 @@ static Node* decl_var()
     return node;
 }
 
-// 期待した型であれば1トークン読み進める
-// 成功したら1が返る
-static int consume(int ty)
+// Return true if the type of a token at the current potions is same to the given type.
+// otherwise Return false.
+static bool consume(int ty)
 {
     Token** tokens = (Token**)(token_vector->data);
     if (tokens[pos]->ty != ty)
-        return 0;
+        return false;
     pos++;
-    return 1;
+    return true;
 }
 
-static int is_type()
+static bool is_type()
 {
     Token** tokens = (Token**)(token_vector->data);
     return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
