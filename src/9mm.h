@@ -79,12 +79,14 @@ typedef struct Type {
     enum { INT,
            PTR } ty;
     struct Type* ptr_to;
+    size_t size;
 } Type;
 
 typedef struct Node {
-    int ty;           // Type of "Node"
-    struct Node* lhs; // Left-hand-side
-    struct Node* rhs; // Right-hand-size
+    int ty;            // Type of "Node"
+    struct Node* lhs;  // Left-hand-side
+    struct Node* rhs;  // Right-hand-size
+    Type const* rtype; // Type of result of "expr" of "Node".
     union {
         int val;          // for "ND_NUM"
         char const* name; // for "ND_LVAR"
@@ -93,6 +95,7 @@ typedef struct Node {
         NodeIfElse* if_else;
         NodeFor* fors;
         NodeCall* call;
+        void* tv;
     };
 } Node;
 

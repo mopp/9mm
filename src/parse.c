@@ -19,7 +19,9 @@ static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static int is_type();
 static inline Context* new_context();
-static inline int get_pointed_type_size(Type const*);
+static Type* new_type(int ty);
+static inline size_t get_pointed_type_size(Type const*);
+static inline size_t get_type_size(Type const*);
 
 // 式の集まり.
 Node* code[100];
@@ -330,11 +332,12 @@ static Node* unary()
     Token** tokens = (Token**)(token_vector->data);
 
     if (tokens[pos]->ty == TK_SIZEOF) {
-        ++pos;
+        size_t pos_debug = ++pos;
         Node* node = unary();
-        if (node->ty == ND_NUM) {
-            return new_node_num(4);
+        if (node->rtype == NULL) {
+            error_at(tokens[pos_debug]->input, "the argument of sizeof is only expression");
         }
+        return new_node_num(node->rtype->size);
     } else if (consume('+')) {
         return term();
     } else if (consume('-')) {
@@ -367,6 +370,7 @@ static Node* term()
 
         if (consume('(')) {
             // 関数呼び出し
+            node = new_node(ND_CALL, NULL, NULL);
             node->ty = ND_CALL;
             node->call = malloc(sizeof(NodeCall));
             node->call->name = ident;
@@ -393,8 +397,10 @@ static Node* term()
             if (NULL == offset) {
                 error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
+
             node->ty = ND_LVAR;
             node->name = name;
+            node->rtype = map_get(context->var_type_map, name);
         }
 
         return node;
@@ -415,13 +421,10 @@ static Node* decl_var()
     }
     pos++;
 
-    Type* type = malloc(sizeof(Type));
-    type->ty = INT;
-    type->ptr_to = NULL;
+    Type* type = new_type(INT);
     while (consume('*')) {
         // ポインタ型の解析
-        Type* t = malloc(sizeof(Type));
-        t->ty = PTR;
+        Type* t = new_type(PTR);
         t->ptr_to = type;
         type = t;
     }
@@ -433,6 +436,7 @@ static Node* decl_var()
     char const* name = tokens[pos++]->name;
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
     node->name = name;
+    node->rtype = type;
 
     // Store variable info into the current context.
     uintptr_t offset = ++context->count_vars * 8;
@@ -459,6 +463,35 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     node->ty = ty;
     node->lhs = lhs;
     node->rhs = rhs;
+
+    switch (ty) {
+        case '=':
+            node->rtype = rhs->rtype;
+            break;
+        case '<':
+        case '>':
+        case ND_LVAR_NEW:
+        case ND_CALL:
+            node->rtype = new_type(INT);
+            break;
+        case ND_REF:
+            node->rtype = new_type(PTR);
+            break;
+        case ND_DEREF:
+            node->rtype = lhs->rtype;
+            break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+            node->rtype = (lhs->rtype->size < rhs->rtype->size) ? rhs->rtype : lhs->rtype;
+            break;
+        case ND_LVAR:
+            /* rtype is set outside */
+        default:
+            node->rtype = NULL;
+    }
+
     return node;
 }
 
@@ -467,6 +500,7 @@ static Node* new_node_num(int val)
     Node* node = malloc(sizeof(Node));
     node->ty = ND_NUM;
     node->val = val;
+    node->rtype = new_type(INT);
     return node;
 }
 
@@ -487,18 +521,37 @@ static inline Context* new_context()
     return context;
 }
 
-static inline int get_pointed_type_size(Type const* type)
+static inline Type* new_type(int ty)
 {
-    if (type->ty != PTR) {
-        return 0;
+    Type* type = malloc(sizeof(Type));
+    type->ty = ty;
+    type->ptr_to = NULL;
+    type->size = get_type_size(type);
+
+    return type;
+}
+
+static inline size_t get_pointed_type_size(Type const* type)
+{
+    if (type == NULL) {
+        error("type is NULL");
     }
 
-    switch (type->ptr_to->ty) {
+    if (type->ty != PTR) {
+        error("not pointer type");
+    }
+
+    return get_type_size(type->ptr_to);
+}
+
+static inline size_t get_type_size(Type const* type)
+{
+    switch (type->ty) {
         case INT:
             return 4;
         case PTR:
             return 8;
         default:
-            return 0;
+            error("unknown type");
     }
 }
