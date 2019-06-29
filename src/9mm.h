@@ -23,17 +23,18 @@ enum {
 
     // トークンの型を表す値
     TK_RETURN,
-    TK_IDENT, // 識別子
-    TK_NUM,   // 整数トークン
-    TK_EOF,   // 入力の終わりを表すトークン
-    TK_IF,    // if
-    TK_ELSE,  // else
-    TK_WHILE, // while
-    TK_FOR,   // for
-    TK_EQ,    // ==
-    TK_NE,    // !=
-    TK_LE,    // <=
-    TK_GE,    // >=
+    TK_IDENT,  // 識別子
+    TK_NUM,    // 整数トークン
+    TK_EOF,    // 入力の終わりを表すトークン
+    TK_IF,     // if
+    TK_ELSE,   // else
+    TK_WHILE,  // while
+    TK_FOR,    // for
+    TK_EQ,     // ==
+    TK_NE,     // !=
+    TK_LE,     // <=
+    TK_GE,     // >=
+    TK_SIZEOF, // sizeof
 };
 
 typedef struct {

@@ -24,6 +24,14 @@ Vector const* tokenize(char const* p)
 
         Token* token = malloc(sizeof(Token));
 
+        if (is_eq(p, "sizeof")) {
+            token->ty = TK_SIZEOF;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 6;
+            continue;
+        }
+
         // NOTE: "return "との比較では対応出来ないケースがあるか考える.
         if (is_eq(p, "return") && !is_alnum(p[6])) {
             token->ty = TK_RETURN;

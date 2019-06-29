@@ -327,14 +327,23 @@ static Node* mul()
 
 static Node* unary()
 {
-    if (consume('+'))
+    Token** tokens = (Token**)(token_vector->data);
+
+    if (tokens[pos]->ty == TK_SIZEOF) {
+        ++pos;
+        Node* node = unary();
+        if (node->ty == ND_NUM) {
+            return new_node_num(4);
+        }
+    } else if (consume('+')) {
         return term();
-    if (consume('-'))
+    } else if (consume('-')) {
         return new_node('-', new_node_num(0), term());
-    if (consume('*'))
+    } else if (consume('*')) {
         return new_node(ND_DEREF, term(), NULL);
-    if (consume('&'))
+    } else if (consume('&')) {
         return new_node(ND_REF, term(), NULL);
+    }
     return term();
 }
 
@@ -478,7 +487,8 @@ static inline Context* new_context()
     return context;
 }
 
-static inline int get_pointed_type_size(Type const* type) {
+static inline int get_pointed_type_size(Type const* type)
+{
     if (type->ty != PTR) {
         return 0;
     }

@@ -21,7 +21,8 @@ equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
-unary      = ("+" | "-" | "&" | "*")? term
+unary      = "sizeof" unary | 
+             ("+" | "-" | "&" | "*")? term
 term       = num |
              ident ("(" (expr ("," expr)*)* ")")? |
              decl_var |

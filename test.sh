@@ -87,3 +87,4 @@ try 8  'int main() { int* p; alloc4(&p, 1, 2, 4, 8); int* q; q = p + 2; return *
 try 8  'int main() { int* p; alloc4(&p, 1, 2, 4, 8); int* q; q = p + 2; return *(1+q); }'
 try 0  'int main() { int* p; return (p+1)-(1+p)+(p-1)-(p-1); }'
 try 0  'int main() { int* p; int** q; q = &p; return q-&p;}'
+try 4  'int main() { return sizeof(1);}'
