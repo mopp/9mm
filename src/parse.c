@@ -3,26 +3,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-static Node* function();
-static Node* block();
-static Node* stmt();
-static Node* expr();
-static Node* assign();
-static Node* equality();
-static Node* relational();
-static Node* add();
-static Node* mul();
-static Node* unary();
-static Node* term();
-static Node* decl_var();
+static Node* function(void);
+static Node* block(void);
+static Node* stmt(void);
+static Node* expr(void);
+static Node* assign(void);
+static Node* equality(void);
+static Node* relational(void);
+static Node* add(void);
+static Node* mul(void);
+static Node* unary(void);
+static Node* term(void);
+static Node* decl_var(void);
 static bool consume(int);
-static bool is_type();
+static bool is_type(void);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int ty);
 static inline size_t get_pointed_type_size(Type const*);
 static inline size_t get_type_size(Type const*);
-static inline Context* new_context();
+static inline Context* new_context(void);
 
 // トークナイズした結果のトークン列
 static Vector const* token_vector = NULL;
@@ -49,7 +49,7 @@ Node const* const* program(Vector const* tv)
     return code;
 }
 
-static Node* function()
+static Node* function(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
@@ -98,7 +98,7 @@ static Node* function()
     return node;
 }
 
-static Node* block()
+static Node* block(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
@@ -118,7 +118,7 @@ static Node* block()
     return node;
 }
 
-static Node* stmt()
+static Node* stmt(void)
 {
     Node* node = NULL;
     Token** tokens = (Token**)(token_vector->data);
@@ -209,12 +209,12 @@ static Node* stmt()
     return node;
 }
 
-static Node* expr()
+static Node* expr(void)
 {
     return assign();
 }
 
-static Node* assign()
+static Node* assign(void)
 {
     Node* node = equality();
     if (consume('='))
@@ -222,7 +222,7 @@ static Node* assign()
     return node;
 }
 
-static Node* equality()
+static Node* equality(void)
 {
     Node* node = relational();
 
@@ -236,7 +236,7 @@ static Node* equality()
     }
 }
 
-static Node* relational()
+static Node* relational(void)
 {
     Node* node = add();
 
@@ -254,7 +254,7 @@ static Node* relational()
     }
 }
 
-static Node* add()
+static Node* add(void)
 {
     Node* node = mul();
 
@@ -303,7 +303,7 @@ static Node* add()
     }
 }
 
-static Node* mul()
+static Node* mul(void)
 {
     Node* node = unary();
 
@@ -317,7 +317,7 @@ static Node* mul()
     }
 }
 
-static Node* unary()
+static Node* unary(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
@@ -340,7 +340,7 @@ static Node* unary()
     return term();
 }
 
-static Node* term()
+static Node* term(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
@@ -400,7 +400,7 @@ static Node* term()
     return NULL;
 }
 
-static Node* decl_var()
+static Node* decl_var(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
@@ -445,7 +445,7 @@ static bool consume(int ty)
     return true;
 }
 
-static bool is_type()
+static bool is_type(void)
 {
     Token** tokens = (Token**)(token_vector->data);
     return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
@@ -554,7 +554,7 @@ static inline size_t get_type_size(Type const* type)
     }
 }
 
-static inline Context* new_context()
+static inline Context* new_context(void)
 {
     Context* context = malloc(sizeof(Context));
 
