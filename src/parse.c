@@ -24,9 +24,6 @@ static inline size_t get_pointed_type_size(Type const*);
 static inline size_t get_type_size(Type const*);
 static inline Context* new_context();
 
-// 式の集まり.
-Node* code[100];
-
 // トークナイズした結果のトークン列
 static Vector const* token_vector = NULL;
 
