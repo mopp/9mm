@@ -58,7 +58,7 @@ void gen(Node const* node)
 
         printf("  # call %s\n", node->call->name);
         for (size_t i = 0; i < args->len; i++) {
-            printf("  pop %s\n", regs[i]);
+                printf("  pop %s\n", regs[args->len - 1 - i]);
         }
 
         // rspを16バイトアラインメントにする.
