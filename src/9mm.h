@@ -5,6 +5,7 @@
 #include "container.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 enum {
     // 抽象構文木の型を表す値
@@ -101,7 +102,19 @@ typedef struct Node {
 
 // main.c
 _Noreturn void error_at(char const*, char const*);
-_Noreturn void error(char const*, ...);
+void _log(char const*, const char*, const char*, size_t, char const*, ...);
+
+#define __log(level, ...) \
+    _log(level, __FILE__, __func__, __LINE__, __VA_ARGS__);
+
+#define error(...)                                      \
+    {                                                   \
+        __log("\033[1;31m[ERROR]\033[0m", __VA_ARGS__); \
+        exit(1);                                        \
+    }
+
+#define debug(...) \
+    __log("\033[1;34m[DEBUG]\033[0m", __VA_ARGS__);
 
 // tokenize.c
 Vector const* tokenize(char const*);

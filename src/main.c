@@ -1,7 +1,6 @@
 #include "9mm.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static char const* input;
@@ -35,23 +34,21 @@ int main(int argc, char const* const* argv)
     return 0;
 }
 
-// エラー箇所を報告するための関数
+// Output an error for user and exit.
 _Noreturn void error_at(char const* loc, char const* msg)
 {
     int pos = loc - input;
-    fprintf(stderr, "%s\n", input);
-    fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
-    fprintf(stderr, "^ %s\n", msg);
+    fprintf(stderr, "\e[1m%s\n%*s^ %s\n\e[0m", input, pos, "", msg);
     exit(1);
 }
 
-// エラーを報告するための関数
-// printfと同じ引数を取る
-_Noreturn void error(char const* fmt, ...)
+// Output log for me and exit.
+void _log(char const* level, const char* file, const char* func, size_t line, char const* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
+    fprintf(stderr, "%s [%s:%s:%zd] ", level, file, func, line);
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
-    exit(1);
+    va_end(ap);
 }
