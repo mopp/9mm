@@ -15,13 +15,13 @@ static Node* unary();
 static Node* term();
 static Node* decl_var();
 static int consume(int);
+static int is_type();
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
-static int is_type();
-static inline Context* new_context();
 static Type* new_type(int ty);
 static inline size_t get_pointed_type_size(Type const*);
 static inline size_t get_type_size(Type const*);
+static inline Context* new_context();
 
 // 式の集まり.
 Node* code[100];
@@ -457,6 +457,12 @@ static int consume(int ty)
     return 1;
 }
 
+static int is_type()
+{
+    Token** tokens = (Token**)(token_vector->data);
+    return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
+}
+
 static Node* new_node(int ty, Node* lhs, Node* rhs)
 {
     Node* node = malloc(sizeof(Node));
@@ -504,23 +510,6 @@ static Node* new_node_num(int val)
     return node;
 }
 
-static int is_type()
-{
-    Token** tokens = (Token**)(token_vector->data);
-    return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
-}
-
-static inline Context* new_context()
-{
-    Context* context = malloc(sizeof(Context));
-
-    context->count_vars = 0;
-    context->var_offset_map = new_map();
-    context->var_type_map = new_map();
-
-    return context;
-}
-
 static inline Type* new_type(int ty)
 {
     Type* type = malloc(sizeof(Type));
@@ -554,4 +543,15 @@ static inline size_t get_type_size(Type const* type)
         default:
             error("unknown type");
     }
+}
+
+static inline Context* new_context()
+{
+    Context* context = malloc(sizeof(Context));
+
+    context->count_vars = 0;
+    context->var_offset_map = new_map();
+    context->var_type_map = new_map();
+
+    return context;
 }
