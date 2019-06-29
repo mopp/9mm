@@ -23,16 +23,14 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_FUNCTION) {
-        NodeFunction* node_function = node->type_depend_value;
-
-        printf("%s:\n", node_function->name);
+        printf("%s:\n", node->function->name);
 
         // プロローグ.
         printf("  push rbp\n");
         printf("  mov rbp, rsp\n");
 
         // 引数をスタックへ書き出し.
-        for (size_t i = 0; i < node_function->context->count_vars; i++) {
+        for (size_t i = 0; i < node->function->context->count_vars; i++) {
             printf("  push %s\n", regs[i]);
         }
 
@@ -49,9 +47,7 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_CALL) {
-        NodeCall* node_call = node->type_depend_value;
-
-        Vector* args = node_call->arguments;
+        Vector* args = node->call->arguments;
         if (6 < args->len) {
             error("6個より多い引数には対応していない");
         }
@@ -60,7 +56,7 @@ void gen(Node const* node)
             gen(args->data[i]);
         }
 
-        printf("  # call %s\n", node_call->name);
+        printf("  # call %s\n", node->call->name);
         for (size_t i = 0; i < args->len; i++) {
             printf("  pop %s\n", regs[i]);
         }
@@ -70,7 +66,7 @@ void gen(Node const* node)
         printf("  mov rax, rsp\n");
         printf("  and rsp, -8\n");
         printf("  push rax\n");
-        printf("  call %s\n", node_call->name);
+        printf("  call %s\n", node->call->name);
         printf("  pop rsp\n");
         printf("  push rax\n");
 
@@ -78,9 +74,8 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_BLOCK) {
-        Vector* stmts = node->type_depend_value;
-        for (size_t i = 0; i < stmts->len; i++) {
-            gen(stmts->data[i]);
+        for (size_t i = 0; i < node->stmts->len; i++) {
+            gen(node->stmts->data[i]);
             printf("  pop rax\n");
         }
         // 最後のものを結果として扱う.
@@ -89,25 +84,23 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_IF) {
-        NodeIfElse* node_if_else = node->type_depend_value;
-
-        gen(node_if_else->condition);
+        gen(node->if_else->condition);
 
         printf("  pop rax\n");
         printf("  cmp rax, 0\n");
-        printf("  je .L_else_%p\n", node_if_else);
+        printf("  je .L_else_%p\n", node->if_else);
 
-        gen(node_if_else->body);
+        gen(node->if_else->body);
 
-        if (node_if_else->else_body == NULL) {
-            printf("  .L_else_%p:\n", node_if_else);
+        if (node->if_else->else_body == NULL) {
+            printf("  .L_else_%p:\n", node->if_else);
             // 空の結果を入れておく.
             printf("  push 0\n");
         } else {
-            printf("  jmp .L_if_end_%p\n", node_if_else);
-            printf("  .L_else_%p:\n", node_if_else);
-            gen(node_if_else->else_body);
-            printf("  .L_if_end_%p:\n", node_if_else);
+            printf("  jmp .L_if_end_%p\n", node->if_else);
+            printf("  .L_else_%p:\n", node->if_else);
+            gen(node->if_else->else_body);
+            printf("  .L_if_end_%p:\n", node->if_else);
         }
 
         return;
@@ -131,28 +124,26 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_FOR) {
-        NodeFor* node_for = node->type_depend_value;
-
-        if (node_for->initializing != NULL) {
-            gen(node_for->initializing);
+        if (node->fors->initializing != NULL) {
+            gen(node->fors->initializing);
         }
-        printf("  .L_for_begin_%p:\n", node_for);
+        printf("  .L_for_begin_%p:\n", node->fors);
 
-        if (node_for->condition != NULL) {
-            gen(node_for->condition);
+        if (node->fors->condition != NULL) {
+            gen(node->fors->condition);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
-            printf("  je .L_for_end_%p\n", node_for);
+            printf("  je .L_for_end_%p\n", node->fors);
         }
 
-        gen(node_for->body);
-        if (node_for->updating != NULL) {
-            gen(node_for->updating);
+        gen(node->fors->body);
+        if (node->fors->updating != NULL) {
+            gen(node->fors->updating);
         }
 
-        printf("  jmp .L_for_begin_%p\n", node_for);
+        printf("  jmp .L_for_begin_%p\n", node->fors);
 
-        printf("  .L_for_end_%p:\n", node_for);
+        printf("  .L_for_end_%p:\n", node->fors);
 
         return;
     }

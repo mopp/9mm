@@ -45,14 +45,16 @@ typedef struct {
     char const* input; // トークン文字列（エラーメッセージ用）
 } Token;
 
-typedef struct Node {
-    int ty;                  // 演算子、ND_NUMかND_LVAR
-    struct Node* lhs;        // 左辺
-    struct Node* rhs;        // 右辺
-    int val;                 // tyがND_NUMの場合のみ使う
-    uintptr_t offset;        // tyがND_LVARの場合のみ使う
-    void* type_depend_value; // tyで変わる
-} Node;
+typedef struct {
+    size_t count_vars;
+    Map* var_offset_map; // variable name -> offset.
+    Map* var_type_map;   // variable name -> "Type".
+} Context;
+
+typedef struct {
+    char const* name;
+    Context* context;
+} NodeFunction;
 
 typedef struct {
     struct Node* condition;
@@ -72,22 +74,26 @@ typedef struct {
     Vector* arguments;
 } NodeCall;
 
-typedef struct {
-    size_t count_vars;
-    Map* var_offset_map; // variable name -> offset.
-    Map* var_type_map;   // variable name -> "Type".
-} Context;
-
-typedef struct {
-    char const* name;
-    Context* context;
-} NodeFunction;
-
 typedef struct Type {
     enum { INT,
            PTR } ty;
     struct Type* ptr_to;
 } Type;
+
+typedef struct Node {
+    int ty;           // Type of "Node"
+    struct Node* lhs; // Left-hand-side
+    struct Node* rhs; // Right-hand-size
+    union {
+        int val;          // for "ND_NUM"
+        uintptr_t offset; // for "ND_LVAR"
+        NodeFunction* function;
+        Vector* stmts;
+        NodeIfElse* if_else;
+        NodeFor* fors;
+        NodeCall* call;
+    };
+} Node;
 
 // main.c
 _Noreturn void error_at(char const*, char const*);

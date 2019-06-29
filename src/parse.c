@@ -67,14 +67,15 @@ static Node* function()
         error_at(tokens[pos]->input, "関数の(が無い");
     }
 
-    NodeFunction* node_function = malloc(sizeof(NodeFunction));
-    node_function->name = name;
-    node_function->context = new_context();
+    Node* node = new_node(ND_FUNCTION, NULL, NULL);
+    node->function = malloc(sizeof(NodeFunction));
+    node->function->name = name;
+    node->function->context = new_context();
 
     // Switch current context.
-    context = node_function->context;
+    context = node->function->context;
 
-    // 仮引数を読み込む
+    // Parse the arguments of the function.
     while (1) {
         if (consume(')')) {
             break;
@@ -88,8 +89,8 @@ static Node* function()
         }
     }
 
-    Node* node = new_node(ND_FUNCTION, block(), NULL);
-    node->type_depend_value = node_function;
+    // Parse the function body.
+    node->lhs = block();
 
     // Finish the current context;
     context = NULL;
@@ -105,17 +106,15 @@ static Node* block()
         error_at(tokens[pos]->input, "ブロックの{が必要");
     }
 
-    Vector* stmts = new_vector();
+    Node* node = new_node(ND_BLOCK, NULL, NULL);
+    node->stmts = new_vector();
     while (!consume('}')) {
         if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "ブロックが閉じられていない");
         }
 
-        vec_push(stmts, stmt());
+        vec_push(node->stmts, stmt());
     }
-
-    Node* node = new_node(ND_BLOCK, NULL, NULL);
-    node->type_depend_value = stmts;
 
     return node;
 }
@@ -147,7 +146,7 @@ static Node* stmt()
 
         node = malloc(sizeof(Node));
         node->ty = ND_IF;
-        node->type_depend_value = node_if_else;
+        node->if_else = node_if_else;
     } else if (consume(TK_WHILE)) {
         if (!consume('(')) {
             error_at(tokens[pos]->input, "whileの条件部は'('から始まらなくてはならない");
@@ -167,39 +166,37 @@ static Node* stmt()
             error_at(tokens[pos]->input, "forの直後は'('から始まらなくてはならない");
         }
 
-        NodeFor* node_for = malloc(sizeof(NodeFor));
+        node = malloc(sizeof(Node));
+        node->ty = ND_FOR;
+        node->fors = malloc(sizeof(NodeFor));
         if (!consume(';')) {
-            node_for->initializing = expr();
+            node->fors->initializing = expr();
             if (!consume(';')) {
                 error_at(tokens[pos]->input, "';'ではないトークンです");
             }
         } else {
-            node_for->initializing = NULL;
+            node->fors->initializing = NULL;
         }
 
         if (!consume(';')) {
-            node_for->condition = expr();
+            node->fors->condition = expr();
             if (!consume(';')) {
                 error_at(tokens[pos]->input, "';'ではないトークンです");
             }
         } else {
-            node_for->condition = NULL;
+            node->fors->condition = NULL;
         }
 
         if (consume(')')) {
-            node_for->updating = NULL;
+            node->fors->updating = NULL;
         } else {
-            node_for->updating = expr();
+            node->fors->updating = expr();
             if (!consume(')')) {
                 error_at(tokens[pos]->input, "forは')'で終わらなければならない");
             }
         }
 
-        node_for->body = stmt();
-
-        node = malloc(sizeof(Node));
-        node->ty = ND_FOR;
-        node->type_depend_value = node_for;
+        node->fors->body = stmt();
     } else if (tokens[pos]->ty == '{') {
         node = block();
     } else {
@@ -325,24 +322,22 @@ static Node* term()
 
         if (consume('(')) {
             // 関数呼び出し
-            NodeCall* node_call = malloc(sizeof(NodeCall));
-            node_call->name = ident;
-            node_call->arguments = new_vector();
+            node->ty = ND_CALL;
+            node->call = malloc(sizeof(NodeCall));
+            node->call->name = ident;
+            node->call->arguments = new_vector();
 
             while (1) {
                 if (consume(')')) {
                     break;
                 } else {
                     // 引数を格納.
-                    vec_push(node_call->arguments, expr());
+                    vec_push(node->call->arguments, expr());
 
                     // 引数が更に合ったときのために','を消費しておく.
                     consume(',');
                 }
             }
-
-            node->ty = ND_CALL;
-            node->type_depend_value = node_call;
         } else if (--pos, is_type()) {
             free(node);
             node = decl_var();
