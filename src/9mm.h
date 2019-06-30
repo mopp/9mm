@@ -49,12 +49,14 @@ typedef struct {
 
 typedef struct {
     size_t count_vars;
-    Map* var_offset_map; // variable name -> offset.
-    Map* var_type_map;   // variable name -> "Type".
+    size_t current_offset; // The offset of the current "rbp" register.
+    Map* var_offset_map;   // variable name -> offset.
+    Map* var_type_map;     // variable name -> "Type".
 } Context;
 
 typedef struct {
     char const* name;
+    Vector* args;
     Context* context;
 } NodeFunction;
 
@@ -78,7 +80,8 @@ typedef struct {
 
 typedef struct Type {
     enum { INT,
-           PTR } ty;
+           PTR,
+           ARRAY } ty;
     struct Type* ptr_to;
     size_t size;
 } Type;

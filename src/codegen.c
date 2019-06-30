@@ -1,7 +1,8 @@
 #include "9mm.h"
 #include <stdio.h>
 
-static char const* const regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+static char const* const regs64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+static char const* const regs32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
 static Context const* context = NULL;
 
@@ -34,8 +35,15 @@ void gen(Node const* node)
         printf("  mov rbp, rsp\n");
 
         // 引数をスタックへ書き出し.
-        for (size_t i = 0; i < context->count_vars; i++) {
-            printf("  push %s\n", regs[i]);
+        for (size_t i = 0; i < node->function->args->len; i++) {
+            Node* arg = node->function->args->data[i];
+            if (arg->rtype->size == 4) {
+                // printf("  push %s\n", regs32[i]);
+                printf("  sub rsp, 4\n");
+                printf("  mov [rsp], %s\n", regs32[i]);
+            } else {
+                printf("  push %s\n", regs64[i]);
+            }
         }
 
         // 本体のblockを展開.
@@ -64,7 +72,7 @@ void gen(Node const* node)
 
         printf("  # call %s\n", node->call->name);
         for (size_t i = 0; i < args->len; i++) {
-            printf("  pop %s\n", regs[args->len - 1 - i]);
+            printf("  pop %s\n", regs64[args->len - 1 - i]);
         }
 
         // rspを16バイトアラインメントにする.
@@ -170,8 +178,8 @@ void gen(Node const* node)
 
     if (node->ty == ND_LVAR_NEW) {
         printf("  # Create local var\n");
-        printf("  sub rsp, 8\n");
-        // スタック調節のために空の値を入れておく.
+        printf("  sub rsp, %zd\n", node->rtype->size);
+        // Push a dummy value for pop after that because it's based on stack machine.
         printf("  push 0\n");
         return;
     }
@@ -180,7 +188,11 @@ void gen(Node const* node)
         // 変数の値をraxにロードする.
         gen_lval(node);
         printf("  pop rax\n");
-        printf("  mov rax, [rax]\n");
+        if (node->rtype->size == 4) {
+            printf("  mov eax, [rax]\n");
+        } else {
+            printf("  mov rax, [rax]\n");
+        }
         printf("  push rax\n");
         return;
     }
@@ -192,7 +204,13 @@ void gen(Node const* node)
 
         printf("  pop rdi\n");
         printf("  pop rax\n");
-        printf("  mov [rax], rdi\n");
+
+        if (node->rtype->size == 4) {
+            printf("  mov [rax], edi\n");
+        } else {
+            printf("  mov [rax], rdi\n");
+        }
+
         printf("  push rdi\n");
         return;
     }
@@ -260,5 +278,5 @@ static void gen_lval(Node const* node)
     printf("  # Reference local var\n");
     printf("  mov rax, rbp\n");
     printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
-    printf("  push rax\n");
+    printf("  push rax\n\n");
 }

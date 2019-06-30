@@ -27,7 +27,7 @@ term       = num |
              ident ("(" (expr ("," expr)*)* ")")? |
              decl_var |
              "(" expr ")
-decl_var   = type ("*")* ident
+decl_var   = type ("*")* ident ("[" num "]")
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]
 num        = [0-9]+

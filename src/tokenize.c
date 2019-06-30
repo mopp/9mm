@@ -118,7 +118,9 @@ Vector const* tokenize(char const* p)
             *p == '{' ||
             *p == '}' ||
             *p == ',' ||
-            *p == '&') {
+            *p == '&' ||
+            *p == '[' ||
+            *p == ']') {
             token->ty = *p;
             token->input = p;
             vec_push(tokens, token);

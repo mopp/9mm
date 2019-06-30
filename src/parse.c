@@ -19,9 +19,8 @@ static bool consume(int);
 static bool is_type(void);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
-static Type* new_type(int ty);
+static Type* new_type(int, Type*);
 static inline size_t get_pointed_type_size(Type const*);
-static inline size_t get_type_size(Type const*);
 static inline Context* new_context(void);
 
 // トークナイズした結果のトークン列
@@ -82,7 +81,7 @@ static Node* function(void)
         } else if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "関数の)が無い");
         } else {
-            free(decl_var());
+            vec_push(node->function->args, decl_var());
 
             // 引数が更にあったときのために','を消費しておく.
             consume(',');
@@ -409,12 +408,10 @@ static Node* decl_var(void)
     }
     pos++;
 
-    Type* type = new_type(INT);
+    Type* type = new_type(INT, NULL);
     while (consume('*')) {
         // ポインタ型の解析
-        Type* t = new_type(PTR);
-        t->ptr_to = type;
-        type = t;
+        type = new_type(PTR, type);
     }
 
     if (tokens[pos]->ty != TK_IDENT) {
@@ -422,13 +419,32 @@ static Node* decl_var(void)
     }
 
     char const* name = tokens[pos++]->name;
+
+    if (tokens[pos]->ty == '[') {
+        // Array type.
+        pos++;
+        if (tokens[pos]->ty != TK_NUM) {
+            error_at(tokens[pos]->input, "it has to be constant number");
+        }
+
+        type = new_type(ARRAY, type);
+        type->size = tokens[pos]->val * type->size;
+
+        pos++;
+        if (tokens[pos++]->ty != ']') {
+            error_at(tokens[pos]->input, "missing ] of array");
+        }
+    }
+
     Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
     node->name = name;
     node->rtype = type;
 
+    context->current_offset += node->rtype->size;
+    ++context->count_vars;
+
     // Store variable info into the current context.
-    uintptr_t offset = ++context->count_vars * 8;
-    map_put(context->var_offset_map, name, (void*)offset);
+    map_put(context->var_offset_map, name, (void*)context->current_offset);
     map_put(context->var_type_map, name, type);
 
     return node;
@@ -462,6 +478,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     switch (ty) {
         case ND_FUNCTION:
             node->function = malloc(sizeof(NodeFunction));
+            node->function->args = new_vector();
             break;
         case ND_BLOCK:
             node->stmts = new_vector();
@@ -488,10 +505,10 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
         case '>':
         case ND_CALL:
         case ND_NUM:
-            node->rtype = new_type(INT);
+            node->rtype = new_type(INT, NULL);
             break;
         case ND_REF:
-            node->rtype = new_type(PTR);
+            node->rtype = new_type(PTR, NULL);
             break;
         case ND_DEREF:
             node->rtype = lhs->rtype;
@@ -519,12 +536,24 @@ static Node* new_node_num(int val)
     return node;
 }
 
-static inline Type* new_type(int ty)
+static Type* new_type(int ty, Type* ptr_to)
 {
     Type* type = malloc(sizeof(Type));
     type->ty = ty;
-    type->ptr_to = NULL;
-    type->size = get_type_size(type);
+    type->ptr_to = ptr_to;
+
+    switch (ty) {
+        case INT:
+            type->size = 4;
+            break;
+        case PTR:
+            type->size = 8;
+            break;
+        default:
+            // Set the size by yourself.
+            type->size = 0;
+            break;
+    }
 
     return type;
 }
@@ -532,22 +561,22 @@ static inline Type* new_type(int ty)
 static inline size_t get_pointed_type_size(Type const* type)
 {
     if (type == NULL) {
-        error("type is NULL");
+        error("NULL is given");
     }
 
     if (type->ty != PTR) {
-        error("not pointer type");
+        error("Not pointer type is given");
     }
 
-    return get_type_size(type->ptr_to);
-}
+    if (type->ptr_to == NULL) {
+        error("Pointer points to NULL");
+    }
 
-static inline size_t get_type_size(Type const* type)
-{
-    switch (type->ty) {
+    switch (type->ptr_to->ty) {
         case INT:
             return 4;
         case PTR:
+        case ARRAY:
             return 8;
         default:
             error("unknown type");
@@ -559,6 +588,7 @@ static inline Context* new_context(void)
     Context* context = malloc(sizeof(Context));
 
     context->count_vars = 0;
+    context->current_offset = 0;
     context->var_offset_map = new_map();
     context->var_type_map = new_map();
 
