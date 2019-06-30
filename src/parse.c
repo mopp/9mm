@@ -428,7 +428,7 @@ static Node* decl_var(void)
         }
 
         type = new_type(ARRAY, type);
-        type->size = tokens[pos]->val * type->size;
+        type->size = tokens[pos]->val * type->ptr_to->size;
 
         pos++;
         if (tokens[pos++]->ty != ']') {
