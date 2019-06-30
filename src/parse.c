@@ -275,7 +275,7 @@ static Node* add(void)
                     error_at(tokens[pos]->input, "undefined variable");
                 }
 
-                if (type->ty == PTR) {
+                if (type->ty == PTR || type->ty == ARRAY) {
                     rhs = new_node('*', rhs, new_node_num(get_pointed_type_size(type)));
                 }
             } else if (lhs->ty == ND_NUM && rhs->ty == ND_LVAR) {
@@ -290,7 +290,7 @@ static Node* add(void)
                     error_at(tokens[pos]->input, "invalid operand");
                 }
 
-                if (type->ty == PTR) {
+                if (type->ty == PTR || type->ty == ARRAY) {
                     lhs = new_node('*', lhs, new_node_num(get_pointed_type_size(type)));
                 }
             }
@@ -380,14 +380,14 @@ static Node* term(void)
         } else {
             // ローカル変数の参照.
             char const* name = tokens[pos++]->name;
-            void const* offset = map_get(context->var_offset_map, name);
-            if (NULL == offset) {
+            Type const* type = map_get(context->var_type_map, name);
+            if (NULL == type) {
                 error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
             }
 
             node = new_node(ND_LVAR, NULL, NULL);
             node->name = name;
-            node->rtype = map_get(context->var_type_map, name);
+            node->rtype =type;
         }
 
         return node;
@@ -564,7 +564,7 @@ static inline size_t get_pointed_type_size(Type const* type)
         error("NULL is given");
     }
 
-    if (type->ty != PTR) {
+    if (type->ty != PTR && type->ty != ARRAY) {
         error("Not pointer type is given");
     }
 

@@ -1,4 +1,5 @@
 #include "9mm.h"
+#include <stdbool.h>
 #include <stdio.h>
 
 static char const* const regs64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
@@ -38,7 +39,6 @@ void gen(Node const* node)
         for (size_t i = 0; i < node->function->args->len; i++) {
             Node* arg = node->function->args->data[i];
             if (arg->rtype->size == 4) {
-                // printf("  push %s\n", regs32[i]);
                 printf("  sub rsp, 4\n");
                 printf("  mov [rsp], %s\n", regs32[i]);
             } else {
@@ -177,7 +177,6 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_LVAR_NEW) {
-        printf("  # Create local var\n");
         printf("  sub rsp, %zd\n", node->rtype->size);
         // Push a dummy value for pop after that because it's based on stack machine.
         printf("  push 0\n");
@@ -187,19 +186,27 @@ void gen(Node const* node)
     if (node->ty == ND_LVAR) {
         // 変数の値をraxにロードする.
         gen_lval(node);
-        printf("  pop rax\n");
-        if (node->rtype->size == 4) {
-            printf("  mov eax, [rax]\n");
-        } else {
-            printf("  mov rax, [rax]\n");
+
+        if (node->rtype->ty != ARRAY) {
+            printf("  pop rax\n");
+            if (node->rtype->size == 4) {
+                printf("  mov eax, [rax]\n");
+            } else {
+                printf("  mov rax, [rax]\n");
+            }
+            printf("  push rax\n");
         }
-        printf("  push rax\n");
+
         return;
     }
 
     if (node->ty == '=') {
         // `a = 1`に対応する.
-        gen_lval(node->lhs);
+        if (node->lhs->ty == ND_DEREF) {
+            gen(node->lhs->lhs);
+        } else {
+            gen_lval(node->lhs);
+        }
         gen(node->rhs);
 
         printf("  pop rdi\n");
@@ -278,5 +285,5 @@ static void gen_lval(Node const* node)
     printf("  # Reference local var\n");
     printf("  mov rax, rbp\n");
     printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
-    printf("  push rax\n\n");
+    printf("  push rax\n");
 }
