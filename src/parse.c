@@ -344,57 +344,52 @@ static Node* term(void)
     Token** tokens = (Token**)(token_vector->data);
 
     if (consume('(')) {
-        // 次のトークンが'('なら、"(" expr ")"のはず
+        // For "(" expr ")"
         Node* node = expr();
-        if (!consume(')'))
-            error_at(tokens[pos]->input,
-                     "開きカッコに対応する閉じカッコがありません");
+        if (!consume(')')) {
+            error_at(tokens[pos]->input, "')' is missing");
+        }
         return node;
     } else if (tokens[pos]->ty == TK_NUM) {
-        // 数値
+        // For number.
         return new_node_num(tokens[pos++]->val);
     } else if (tokens[pos]->ty == TK_IDENT) {
-        Node* node = NULL;
         char const* ident = tokens[pos++]->name;
 
         if (consume('(')) {
-            // 関数呼び出し
-            node = new_node(ND_CALL, NULL, NULL);
+            // Function call.
+            Node* node = new_node(ND_CALL, NULL, NULL);
             node->call->name = ident;
             node->call->arguments = new_vector();
 
-            while (1) {
-                if (consume(')')) {
-                    break;
-                } else {
-                    // 引数を格納.
-                    vec_push(node->call->arguments, expr());
+            while (!consume(')')) {
+                // Store the argument.
+                vec_push(node->call->arguments, expr());
 
-                    // 引数が更に合ったときのために','を消費しておく.
-                    consume(',');
-                }
+                // For the next argument.
+                consume(',');
             }
+
+            return node;
         } else if (--pos, is_type()) {
-            free(node);
-            node = decl_var();
+            return decl_var();
         } else {
-            // ローカル変数の参照.
+            // Reference local variable.
             char const* name = tokens[pos++]->name;
             Type const* type = map_get(context->var_type_map, name);
             if (NULL == type) {
-                error_at(tokens[pos - 1]->input, "宣言されていない変数を使用した");
+                error_at(tokens[pos - 1]->input, "Not declared variable is used");
             }
 
-            node = new_node(ND_LVAR, NULL, NULL);
+            Node* node = new_node(ND_LVAR, NULL, NULL);
             node->name = name;
-            node->rtype =type;
-        }
+            node->rtype = type;
 
-        return node;
+            return node;
+        }
     }
 
-    error_at(tokens[pos]->input,
-             "数値でも開きカッコでもないトークンです");
+    error_at(tokens[pos]->input, "unexpected token is given");
 
     return NULL;
 }
