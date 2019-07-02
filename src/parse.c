@@ -22,6 +22,7 @@ static Node* new_node_num(int);
 static Type* new_type(int, Type*);
 static inline size_t get_pointed_type_size(Type const*);
 static inline Context* new_context(void);
+static inline Node* convert_ptr_plus_minus(Node*);
 
 // トークナイズした結果のトークン列
 static Vector const* token_vector = NULL;
@@ -263,39 +264,8 @@ static Node* add(void)
 
         if (op == '+' || op == '-') {
             ++pos;
-            Node* lhs = node;
-            Node* rhs = mul();
-
-            // Add/Sub for pointer type.
-            if (lhs->ty == ND_LVAR && rhs->ty == ND_NUM) {
-                // p + 1 -> p + (1 * sizeof(p))
-                // p - 1 -> p - (1 * sizeof(p))
-                Type const* type = map_get(context->var_type_map, lhs->name);
-                if (type == NULL) {
-                    error_at(tokens[pos]->input, "undefined variable");
-                }
-
-                if (type->ty == PTR || type->ty == ARRAY) {
-                    rhs = new_node('*', rhs, new_node_num(get_pointed_type_size(type)));
-                }
-            } else if (lhs->ty == ND_NUM && rhs->ty == ND_LVAR) {
-                // 1 + p -> (1 * sizeof(p)) + p
-                // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
-                Type const* type = map_get(context->var_type_map, rhs->name);
-                if (type == NULL) {
-                    error_at(tokens[pos]->input, "undefined variable");
-                }
-
-                if (op == '-') {
-                    error_at(tokens[pos]->input, "invalid operand");
-                }
-
-                if (type->ty == PTR || type->ty == ARRAY) {
-                    lhs = new_node('*', lhs, new_node_num(get_pointed_type_size(type)));
-                }
-            }
-
-            node = new_node(op, lhs, rhs);
+            node = new_node(op, node, mul());
+            node = convert_ptr_plus_minus(node);
         } else {
             return node;
         }
@@ -384,6 +354,25 @@ static Node* term(void)
             Node* node = new_node(ND_LVAR, NULL, NULL);
             node->name = name;
             node->rtype = type;
+
+            if (consume('[')) {
+                // Accessing the array argument via the given index.
+                if (node->rtype->ty != ARRAY) {
+                    error_at(tokens[pos - 2]->input, "Not array");
+                }
+
+                // Accessing the array via the given index.
+                Node* node_index_expr = expr();
+
+                if (!consume(']')) {
+                    error_at(tokens[pos - 1]->input, "']' is missing");
+                }
+
+                node = new_node('+', node, node_index_expr);
+                node = convert_ptr_plus_minus(node);
+
+                return new_node(ND_DEREF, node, NULL);
+            }
 
             return node;
         }
@@ -588,4 +577,46 @@ static inline Context* new_context(void)
     context->var_type_map = new_map();
 
     return context;
+}
+
+static Node* convert_ptr_plus_minus(Node* node)
+{
+    if (node->ty != '+' && node->ty != '-') {
+        error("Converting pointer calculation is for only '+' and '-'");
+    }
+
+    Token** tokens = (Token**)(token_vector->data);
+    Node* lhs = node->lhs;
+    Node* rhs = node->rhs;
+
+    // Add/Sub for pointer or array type.
+    if (lhs->ty == ND_LVAR && rhs->ty == ND_NUM) {
+        // p + 1 -> p + (1 * sizeof(p))
+        // p - 1 -> p - (1 * sizeof(p))
+        Type const* type = map_get(context->var_type_map, lhs->name);
+        if (type == NULL) {
+            error_at(tokens[pos]->input, "undefined variable");
+        }
+
+        if (type->ty == PTR || type->ty == ARRAY) {
+            node->rhs = new_node('*', rhs, new_node_num(get_pointed_type_size(type)));
+        }
+    } else if (lhs->ty == ND_NUM && rhs->ty == ND_LVAR) {
+        // 1 + p -> (1 * sizeof(p)) + p
+        // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
+        Type const* type = map_get(context->var_type_map, rhs->name);
+        if (type == NULL) {
+            error_at(tokens[pos]->input, "undefined variable");
+        }
+
+        if (node->ty == '-') {
+            error_at(tokens[pos]->input, "invalid operand");
+        }
+
+        if (type->ty == PTR || type->ty == ARRAY) {
+            node->lhs = new_node('*', lhs, new_node_num(get_pointed_type_size(type)));
+        }
+    }
+
+    return node;
 }
