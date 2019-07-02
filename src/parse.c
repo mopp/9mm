@@ -304,7 +304,12 @@ static Node* unary(void)
     } else if (consume('*')) {
         return new_node(ND_DEREF, term(), NULL);
     } else if (consume('&')) {
-        return new_node(ND_REF, term(), NULL);
+        Node* node = term();
+        if (node->ty == ND_DEREF && node->rtype->ty == ARRAY) {
+            return node->lhs;
+        } else {
+            return new_node(ND_REF, node, NULL);
+        }
     }
     return term();
 }
