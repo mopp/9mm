@@ -17,14 +17,25 @@ int main(int argc, char const* const* argv)
         return 0;
     }
 
-    // トークナイズする
     input = argv[1];
     Vector const* tokens = tokenize(input);
     Node const* const* code = program(tokens);
 
-    // アセンブリの前半部分を出力
-    printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
+    puts(".intel_syntax noprefix");
+    puts(".global main\n");
+
+    // Allocate the global variable spaces.
+    puts("# Global variables");
+    puts(".bss");
+    puts(".align 32");
+    for (size_t i = 0; code[i]; i++) {
+        if (code[i]->ty == ND_GVAR_NEW) {
+            printf("%s:\n", code[i]->name);
+            printf("  .zero %zd\n", code[i]->rtype->size);
+        }
+    }
+    putchar('\n');
+    puts(".text");
 
     // 先頭の関数から順にコード生成
     for (int i = 0; code[i]; i++) {

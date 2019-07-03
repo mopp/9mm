@@ -11,8 +11,10 @@ enum {
     // 抽象構文木の型を表す値
     ND_NUM = 256, // 整数のノードの型
     ND_RETURN,
-    ND_LVAR_NEW, // ローカル変数の宣言
-    ND_LVAR,     // ローカル変数の参照
+    ND_LVAR_NEW, // Declare local variable.
+    ND_LVAR,     // Reference local variable.
+    ND_GVAR_NEW, // Declare global variable.
+    ND_GVAR,     // Reference global variable.
     ND_IF,       // if
     ND_WHILE,    // while
     ND_FOR,      // for

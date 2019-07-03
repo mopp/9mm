@@ -11,7 +11,7 @@ try() {
         exit 1
     fi
 
-    gcc -g -o tmp tmp.s src/lib.o
+    gcc -no-pie -g -o tmp tmp.s src/lib.o
     ./tmp
     actual="$?"
 
@@ -106,3 +106,5 @@ try 4  'int main() { int a[1]; return sizeof(a);}'
 try 80 'int main() { int* a[10]; return sizeof(a);}'
 try 8  'int main() { int* a[1]; return sizeof(a);}'
 try 0  'int main() { int* a[4]; return a-&a[0];}'
+try 2  'int x; int main() { x = 1; return x+1;}'
+try 4  'int* foo[10]; int main() { foo[0] = 1; foo[9] = 3; return foo[0]+foo[9];}'

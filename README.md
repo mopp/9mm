@@ -6,8 +6,10 @@ based on [低レイヤを知りたい人のためのCコンパイラ作成入門
 
 # Production rule
 ```txt
-program    = function*
-function   = "int" ident "(" (decl_var ("," decl_var)*)* ")" block
+program    = global
+global     = (decl_var ";")* | 
+             function*
+function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
 block      = "{" stmt* "}"
 stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
              "while" "(" expr ")" stmt |
@@ -28,7 +30,8 @@ term       = num |
              ident "[" expr "]" |
              decl_var |
              "(" expr ")
-decl_var   = type ("*")* ident ("[" num "]")
+decl_var   = type ident ("[" num "]")
+type       = ident ("*")*
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]
 num        = [0-9]+

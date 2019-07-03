@@ -7,15 +7,19 @@ static char const* const regs32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 
 static Context const* context = NULL;
 
-static void gen_lval(Node const*);
+static void gen_var_addr(Node const*);
 
 void gen(Node const* node)
 {
+    if (node->ty == ND_GVAR_NEW) {
+        return;
+    }
+
     if (node->ty == ND_REF) {
         if (node->lhs->ty != ND_LVAR) {
             error("変数以外のアドレスは取得できません");
         }
-        gen_lval(node->lhs);
+        gen_var_addr(node->lhs);
         return;
     }
 
@@ -183,9 +187,9 @@ void gen(Node const* node)
         return;
     }
 
-    if (node->ty == ND_LVAR) {
+    if (node->ty == ND_LVAR || node->ty == ND_GVAR) {
         // 変数の値をraxにロードする.
-        gen_lval(node);
+        gen_var_addr(node);
 
         if (node->rtype->ty != ARRAY) {
             printf("  pop rax\n");
@@ -205,7 +209,7 @@ void gen(Node const* node)
         if (node->lhs->ty == ND_DEREF) {
             gen(node->lhs->lhs);
         } else {
-            gen_lval(node->lhs);
+            gen_var_addr(node->lhs);
         }
         gen(node->rhs);
 
@@ -275,15 +279,18 @@ void gen(Node const* node)
 }
 
 
-// 与えられたノードの持つ変数のアドレスをスタックにpushする
-static void gen_lval(Node const* node)
+// Push the address of the given variable on the stack top.
+static void gen_var_addr(Node const* node)
 {
-    if (node->ty != ND_LVAR) {
+    if (node->ty == ND_LVAR) {
+        printf("  # Reference local var\n");
+        printf("  mov rax, rbp\n");
+        printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
+        printf("  push rax\n");
+    } else if (node->ty == ND_GVAR) {
+        printf("  lea rax, %s\n", node->name);
+        printf("  push rax\n");
+    } else {
         error("代入の左辺値が変数ではありません");
     }
-
-    printf("  # Reference local var\n");
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
-    printf("  push rax\n");
 }

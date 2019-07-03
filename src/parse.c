@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static Node* function(void);
+static Node* global(void);
+static Node* function(Type*);
 static Node* block(void);
 static Node* stmt(void);
 static Node* expr(void);
@@ -14,7 +15,8 @@ static Node* add(void);
 static Node* mul(void);
 static Node* unary(void);
 static Node* term(void);
-static Node* decl_var(void);
+static Node* decl_var(Type*);
+static Type* parse_type(void);
 static bool consume(int);
 static bool is_type(void);
 static Node* new_node(int, Node*, Node*);
@@ -33,6 +35,9 @@ static int pos;
 // Current context.
 static Context* context = NULL;
 
+// Global variable type map.
+static Map* gvar_type_map = NULL;
+
 
 Node const* const* program(Vector const* tv)
 {
@@ -40,39 +45,51 @@ Node const* const* program(Vector const* tv)
 
     Token** tokens = (Token**)token_vector->data;
 
+    gvar_type_map = new_map();
+
     size_t i = 0;
     Node const** code = malloc(sizeof(Node*) * 64);
     while (tokens[pos]->ty != TK_EOF) {
-        code[i++] = function();
+        code[i++] = global();
     }
     code[i] = NULL;
+
     return code;
 }
 
-static Node* function(void)
+static Node* global()
+{
+    Type* type = parse_type();
+
+    Token** tokens = (Token**)(token_vector->data);
+    if (tokens[pos]->ty == TK_IDENT && tokens[pos + 1]->ty == '(') {
+        // Define function.
+        return function(type);
+    } else {
+        // Declare global variable.
+        Node* node = decl_var(type);
+
+        if (!consume(';')) {
+            error_at(tokens[pos]->input, "';' is missing");
+        }
+        return node;
+    }
+}
+
+static Node* function(Type* type)
 {
     Token** tokens = (Token**)(token_vector->data);
 
-    if (tokens[pos]->ty != TK_IDENT || strcmp(tokens[pos]->name, "int") != 0) {
-        error_at(tokens[pos]->input, "関数の返り値がintではない");
-    }
-    ++pos;
-
-    if (tokens[pos]->ty != TK_IDENT) {
-        error_at(tokens[pos]->input, "先頭が関数名ではない");
-    }
-
     char const* name = tokens[pos++]->name;
-
-    if (!consume('(')) {
-        error_at(tokens[pos]->input, "関数の(が無い");
-    }
+    consume('(');
 
     Node* node = new_node(ND_FUNCTION, NULL, NULL);
+    node->rtype = type;
     node->function->name = name;
     node->function->context = new_context();
 
     // Switch current context.
+    Context* prev_context = context;
     context = node->function->context;
 
     // Parse the arguments of the function.
@@ -82,7 +99,7 @@ static Node* function(void)
         } else if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "関数の)が無い");
         } else {
-            vec_push(node->function->args, decl_var());
+            vec_push(node->function->args, decl_var(parse_type()));
 
             // 引数が更にあったときのために','を消費しておく.
             consume(',');
@@ -93,7 +110,7 @@ static Node* function(void)
     node->lhs = block();
 
     // Finish the current context;
-    context = NULL;
+    context = prev_context;
 
     return node;
 }
@@ -347,16 +364,24 @@ static Node* term(void)
 
             return node;
         } else if (--pos, is_type()) {
-            return decl_var();
+            return decl_var(parse_type());
         } else {
             // Reference local variable.
             char const* name = tokens[pos++]->name;
+            Node* node = NULL;
+
             Type const* type = map_get(context->var_type_map, name);
-            if (NULL == type) {
-                error_at(tokens[pos - 1]->input, "Not declared variable is used");
+            if (type != NULL) {
+                node = new_node(ND_LVAR, NULL, NULL);
+            } else {
+                type = map_get(gvar_type_map, name);
+                if (type != NULL) {
+                    node = new_node(ND_GVAR, NULL, NULL);
+                } else {
+                    error_at(tokens[pos - 1]->input, "Not declared variable is used");
+                }
             }
 
-            Node* node = new_node(ND_LVAR, NULL, NULL);
             node->name = name;
             node->rtype = type;
 
@@ -388,25 +413,9 @@ static Node* term(void)
     return NULL;
 }
 
-static Node* decl_var(void)
+static Node* decl_var(Type* type)
 {
     Token** tokens = (Token**)(token_vector->data);
-
-    if (tokens[pos]->ty != TK_IDENT) {
-        error_at(tokens[pos]->input, "not type");
-    }
-    pos++;
-
-    Type* type = new_type(INT, NULL);
-    while (consume('*')) {
-        // ポインタ型の解析
-        type = new_type(PTR, type);
-    }
-
-    if (tokens[pos]->ty != TK_IDENT) {
-        error_at(tokens[pos]->input, "invalid variable name");
-    }
-
     char const* name = tokens[pos++]->name;
 
     if (tokens[pos]->ty == '[') {
@@ -425,18 +434,48 @@ static Node* decl_var(void)
         }
     }
 
-    Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
-    node->name = name;
-    node->rtype = type;
+    if (context != NULL) {
+        Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
+        node->name = name;
+        node->rtype = type;
 
-    context->current_offset += node->rtype->size;
-    ++context->count_vars;
+        context->current_offset += node->rtype->size;
+        ++context->count_vars;
 
-    // Store variable info into the current context.
-    map_put(context->var_offset_map, name, (void*)context->current_offset);
-    map_put(context->var_type_map, name, type);
+        // Store variable info into the current context.
+        map_put(context->var_offset_map, name, (void*)context->current_offset);
+        map_put(context->var_type_map, name, type);
 
-    return node;
+        return node;
+    } else {
+        Node* node = new_node(ND_GVAR_NEW, NULL, NULL);
+        node->name = name;
+        node->rtype = type;
+
+        // Store global variable info.
+        map_put(gvar_type_map, name, type);
+
+        return node;
+    }
+}
+
+static Type* parse_type(void)
+{
+    Token** tokens = (Token**)(token_vector->data);
+
+    if (tokens[pos]->ty != TK_IDENT) {
+        // TODO: Confirm is the given type exist?
+        error_at(tokens[pos]->input, "not type");
+    }
+    pos++;
+
+    Type* type = new_type(INT, NULL);
+    while (consume('*')) {
+        // ポインタ型の解析
+        type = new_type(PTR, type);
+    }
+
+    return type;
 }
 
 // Return true if the type of a token at the current potions is same to the given type.
