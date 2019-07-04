@@ -90,6 +90,7 @@ void gen(Node const* node)
         printf("  mov rax, rsp\n");
         printf("  and rsp, -8\n");
         printf("  push rax\n");
+        printf("  xor al, al\n"); // for variadic function call.
         printf("  call %s\n", node->call->name);
         printf("  pop rsp\n");
         printf("  push rax\n");

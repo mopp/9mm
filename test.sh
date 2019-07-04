@@ -111,3 +111,4 @@ try 4  'int* foo[10]; int main() { foo[0] = 1; foo[9] = 3; return foo[0]+foo[9];
 try 3  'int main() { char x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0] + y; }'
 try 97 'int main() { char* x; x = "abc"; return *x; }'
 try 97 'int main() { char* x; x = "abc"; return x[0]; }'
+try 0  'int main() { printf("hello, world\n"); return 0; }'
