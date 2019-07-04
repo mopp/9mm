@@ -391,8 +391,8 @@ static Node* term(void)
 
             if (consume('[')) {
                 // Accessing the array argument via the given index.
-                if (node->rtype->ty != ARRAY) {
-                    error_at(tokens[pos - 2]->input, "Not array");
+                if (node->rtype->ty != ARRAY && node->rtype->ty != PTR) {
+                    error_at(tokens[pos - 2]->input, "Array or pointer only can be accessed via index");
                 }
 
                 // Accessing the array via the given index.
