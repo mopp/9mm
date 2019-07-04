@@ -24,6 +24,20 @@ int main(int argc, char const* const* argv)
     puts(".intel_syntax noprefix");
     puts(".global main\n");
 
+    Vector const* keys = str_label_map->keys;
+    if (keys->len != 0) {
+        // Define string literals.
+        puts(".data");
+        puts(".align 8");
+        for (size_t i = keys->len; 0 < i; i--) {
+            char const* str = str_label_map->keys->data[i - 1];
+            char const* label = str_label_map->vals->data[i - 1];
+            printf("%s:\n", label);
+            printf("  .string %s\n", str);
+        }
+        putchar('\n');
+    }
+
     // Allocate the global variable spaces.
     puts("# Global variables");
     puts(".bss");

@@ -24,6 +24,20 @@ Vector const* tokenize(char const* p)
 
         Token* token = malloc(sizeof(Token));
 
+        if (*p == '"') {
+            // Read string literal.
+            char const* str_begin = p++;
+            while (*p != '"') {
+                ++p;
+            }
+            token->ty = TK_STR;
+            token->input = str_begin;
+            token->name = strndup(str_begin, p - str_begin + 1);
+            vec_push(tokens, token);
+            ++p;
+            continue;
+        }
+
         if (is_eq(p, "sizeof")) {
             token->ty = TK_SIZEOF;
             token->input = p;

@@ -1,5 +1,6 @@
 #include "9mm.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -38,6 +39,8 @@ static Context* context = NULL;
 // Global variable type map.
 static Map* gvar_type_map = NULL;
 
+// String literal to label map.
+Map* str_label_map = NULL;
 
 Node const* const* program(Vector const* tv)
 {
@@ -46,6 +49,7 @@ Node const* const* program(Vector const* tv)
     Token** tokens = (Token**)token_vector->data;
 
     gvar_type_map = new_map();
+    str_label_map = new_map();
 
     size_t i = 0;
     Node const** code = malloc(sizeof(Node*) * 64);
@@ -406,6 +410,18 @@ static Node* term(void)
 
             return node;
         }
+    } else if (tokens[pos]->ty == TK_STR) {
+        Node* node = new_node(ND_STR, NULL, NULL);
+
+        char* buf = malloc(64);
+        sprintf(buf, "str_%zd", str_label_map->keys->len);
+        map_put(str_label_map, tokens[pos]->name, buf);
+
+        node->label = buf;
+
+        pos++;
+
+        return node;
     }
 
     error_at(tokens[pos]->input, "unexpected token is given");
@@ -550,6 +566,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = new_type(INT, NULL);
             break;
         case ND_REF:
+        case ND_STR:
             node->rtype = new_type(PTR, NULL);
             break;
         case ND_DEREF:

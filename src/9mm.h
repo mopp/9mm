@@ -23,6 +23,7 @@ enum {
     ND_FUNCTION, // 関数定義
     ND_REF,      // reference
     ND_DEREF,    // dereference
+    ND_STR,      // String literal
 
     // トークンの型を表す値
     TK_RETURN,
@@ -38,6 +39,7 @@ enum {
     TK_LE,     // <=
     TK_GE,     // >=
     TK_SIZEOF, // sizeof
+    TK_STR,    // String literal
 };
 
 typedef struct {
@@ -102,6 +104,7 @@ typedef struct Node {
         NodeIfElse* if_else;
         NodeFor* fors;
         NodeCall* call;
+        char const* label; // for "ND_STR"
         void* tv;
     };
 } Node;
@@ -127,6 +130,7 @@ Vector const* tokenize(char const*);
 
 // parse.c
 Node const* const* program(Vector const*);
+extern Map* str_label_map;
 
 // codegen.c
 void gen(Node const*);

@@ -11,6 +11,12 @@ static void gen_var_addr(Node const*);
 
 void gen(Node const* node)
 {
+    if (node->ty == ND_STR) {
+        printf("  lea rax, %s\n", node->label);
+        printf("  push rax\n");
+        return;
+    }
+
     if (node->ty == ND_GVAR_NEW) {
         return;
     }
@@ -208,7 +214,7 @@ void gen(Node const* node)
 
     if (node->ty == '=') {
         // `a = 1`に対応する.
-        if (node->lhs->ty == ND_DEREF) {
+        if (node->lhs->ty == ND_DEREF || node->lhs->ty == ND_STR) {
             gen(node->lhs->lhs);
         } else {
             gen_var_addr(node->lhs);
