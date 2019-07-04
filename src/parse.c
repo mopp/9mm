@@ -415,6 +415,10 @@ static Node* term(void)
 
 static Node* decl_var(Type* type)
 {
+    if (type == NULL) {
+        error("the given type must NOT be NULL");
+    }
+
     Token** tokens = (Token**)(token_vector->data);
     char const* name = tokens[pos++]->name;
 
@@ -467,9 +471,19 @@ static Type* parse_type(void)
         // TODO: Confirm is the given type exist?
         error_at(tokens[pos]->input, "not type");
     }
-    pos++;
 
-    Type* type = new_type(INT, NULL);
+    if (tokens[pos]->name == NULL) {
+        error("Name of the token is NULL");
+    }
+
+    char const* name = tokens[pos++]->name;
+    Type* type = NULL;
+    if (strcmp(name, "char") == 0) {
+        type = new_type(CHAR, NULL);
+    } else {
+        type = new_type(INT, NULL);
+    }
+
     while (consume('*')) {
         // ポインタ型の解析
         type = new_type(PTR, type);
@@ -492,7 +506,7 @@ static bool consume(int ty)
 static bool is_type(void)
 {
     Token** tokens = (Token**)(token_vector->data);
-    return tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "int") == 0;
+    return tokens[pos]->ty == TK_IDENT && (strcmp(tokens[pos]->name, "int") == 0 || strcmp(tokens[pos]->name, "char") == 0);
 }
 
 static Node* new_node(int ty, Node* lhs, Node* rhs)
@@ -571,6 +585,9 @@ static Type* new_type(int ty, Type* ptr_to)
     type->ptr_to = ptr_to;
 
     switch (ty) {
+        case CHAR:
+            type->size = 1;
+            break;
         case INT:
             type->size = 4;
             break;
@@ -601,6 +618,8 @@ static inline size_t get_pointed_type_size(Type const* type)
     }
 
     switch (type->ptr_to->ty) {
+        case CHAR:
+            return 1;
         case INT:
             return 4;
         case PTR:

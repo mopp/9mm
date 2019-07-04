@@ -193,7 +193,9 @@ void gen(Node const* node)
 
         if (node->rtype->ty != ARRAY) {
             printf("  pop rax\n");
-            if (node->rtype->size == 4) {
+            if (node->rtype->size == 1) {
+                printf("  movsx ecx, BYTE PTR [rax]\n");
+            } else if (node->rtype->size == 4) {
                 printf("  mov eax, [rax]\n");
             } else {
                 printf("  mov rax, [rax]\n");
@@ -216,7 +218,9 @@ void gen(Node const* node)
         printf("  pop rdi\n");
         printf("  pop rax\n");
 
-        if (node->rtype->size == 4) {
+        if (node->rtype->size == 1) {
+            printf("  mov [rax], dl\n");
+        } else if (node->rtype->size == 4) {
             printf("  mov [rax], edi\n");
         } else {
             printf("  mov [rax], rdi\n");

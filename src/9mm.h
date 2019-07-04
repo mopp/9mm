@@ -81,7 +81,8 @@ typedef struct {
 } NodeCall;
 
 typedef struct Type {
-    enum { INT,
+    enum { CHAR,
+           INT,
            PTR,
            ARRAY } ty;
     struct Type* ptr_to;
