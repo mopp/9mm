@@ -572,6 +572,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = new_type(PTR, new_type(CHAR, NULL));
             break;
         case ND_DEREF:
+        case ND_RETURN:
             node->rtype = lhs->rtype;
             break;
         case '+':
