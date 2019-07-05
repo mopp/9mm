@@ -112,3 +112,5 @@ try 3  'int main() { char x[3]; x[0] = -1; x[1] = 2; int y; y = 4; return x[0] +
 try 97 'int main() { char* x; x = "abc"; return *x; }'
 try 97 'int main() { char* x; x = "abc"; return x[0]; }'
 try 0  'int main() { printf("hello, world\n"); return 0; }'
+try 5  'int main() { int x; set(&x); return x;} int set(int* x) { *x=5; return 0; }'
+try 8  'int main() { int x; int y; set(&x, &y); return x+y;} int set(int* x, int* y) { *x=4; *y=4; return 0;}'
