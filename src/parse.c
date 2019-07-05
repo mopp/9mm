@@ -650,7 +650,7 @@ static Node* convert_ptr_plus_minus(Node* node)
     Node* rhs = node->rhs;
 
     // Add/Sub for pointer or array type.
-    if ((lhs->rtype->ty == PTR || lhs->rtype->ty == ARRAY) && rhs->ty == ND_NUM) {
+    if ((lhs->rtype->ty == PTR || lhs->rtype->ty == ARRAY) && rhs->rtype->ty == INT) {
         // p + 1 -> p + (1 * sizeof(p))
         // p - 1 -> p - (1 * sizeof(p))
         if (lhs->rtype->ptr_to == NULL) {
@@ -658,7 +658,7 @@ static Node* convert_ptr_plus_minus(Node* node)
         }
 
         node->rhs = new_node('*', rhs, new_node_num(get_type_size(lhs->rtype->ptr_to)));
-    } else if (lhs->ty == ND_NUM && (rhs->rtype->ty == PTR || rhs->rtype->ty == ARRAY)) {
+    } else if (lhs->rtype->ty == INT && (rhs->rtype->ty == PTR || rhs->rtype->ty == ARRAY)) {
         // 1 + p -> (1 * sizeof(p)) + p
         // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
         if (rhs->rtype->ptr_to == NULL) {
