@@ -22,6 +22,25 @@ Vector const* tokenize(char const* p)
             continue;
         }
 
+        // Skip line comment.
+        if (strncmp(p, "//", 2) == 0) {
+            p += 2;
+            while (*p != '\n') {
+                p++;
+            }
+            continue;
+        }
+
+        // Skip block comment.
+        if (strncmp(p, "/*", 2) == 0) {
+            char* q = strstr(p + 2, "*/");
+            if (!q) {
+                error_at(p, "The comment is NOT closed.");
+            }
+            p = q + 2;
+            continue;
+        }
+
         Token* token = malloc(sizeof(Token));
 
         if (*p == '"') {
