@@ -87,7 +87,7 @@ typedef struct Type {
            INT,
            PTR,
            ARRAY } ty;
-    struct Type* ptr_to;
+    struct Type const* ptr_to;
     size_t size;
 } Type;
 

@@ -22,8 +22,8 @@ static bool consume(int);
 static bool is_type(void);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
-static Type* new_type(int, Type*);
-static inline size_t get_pointed_type_size(Type const*);
+static Type* new_type(int, Type const*);
+static inline size_t get_type_size(Type const*);
 static inline Context* new_context(void);
 static inline Node* convert_ptr_plus_minus(Node*);
 
@@ -566,8 +566,10 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = new_type(INT, NULL);
             break;
         case ND_REF:
+            node->rtype = new_type(PTR, node->lhs->rtype);
+            break;
         case ND_STR:
-            node->rtype = new_type(PTR, NULL);
+            node->rtype = new_type(PTR, new_type(CHAR, NULL));
             break;
         case ND_DEREF:
             node->rtype = lhs->rtype;
@@ -595,53 +597,32 @@ static Node* new_node_num(int val)
     return node;
 }
 
-static Type* new_type(int ty, Type* ptr_to)
+static Type* new_type(int ty, Type const* ptr_to)
 {
     Type* type = malloc(sizeof(Type));
     type->ty = ty;
     type->ptr_to = ptr_to;
-
-    switch (ty) {
-        case CHAR:
-            type->size = 1;
-            break;
-        case INT:
-            type->size = 4;
-            break;
-        case PTR:
-            type->size = 8;
-            break;
-        default:
-            // Set the size by yourself.
-            type->size = 0;
-            break;
-    }
+    type->size = get_type_size(type);
 
     return type;
 }
 
-static inline size_t get_pointed_type_size(Type const* type)
+static inline size_t get_type_size(Type const* type)
 {
     if (type == NULL) {
         error("NULL is given");
     }
 
-    if (type->ty != PTR && type->ty != ARRAY) {
-        error("Not pointer type is given");
-    }
-
-    if (type->ptr_to == NULL) {
-        error("Pointer points to NULL");
-    }
-
-    switch (type->ptr_to->ty) {
+    switch (type->ty) {
         case CHAR:
             return 1;
         case INT:
             return 4;
         case PTR:
-        case ARRAY:
             return 8;
+        case ARRAY:
+            // Size of array is set by yourself.
+            return 0;
         default:
             error("unknown type");
     }
@@ -665,37 +646,31 @@ static Node* convert_ptr_plus_minus(Node* node)
         error("Converting pointer calculation is for only '+' and '-'");
     }
 
-    Token** tokens = (Token**)(token_vector->data);
     Node* lhs = node->lhs;
     Node* rhs = node->rhs;
 
     // Add/Sub for pointer or array type.
-    if (lhs->ty == ND_LVAR && rhs->ty == ND_NUM) {
+    if ((lhs->rtype->ty == PTR || lhs->rtype->ty == ARRAY) && rhs->ty == ND_NUM) {
         // p + 1 -> p + (1 * sizeof(p))
         // p - 1 -> p - (1 * sizeof(p))
-        Type const* type = map_get(context->var_type_map, lhs->name);
-        if (type == NULL) {
-            error_at(tokens[pos]->input, "undefined variable");
+        if (lhs->rtype->ptr_to == NULL) {
+            error("ptr_to is NULL");
         }
 
-        if (type->ty == PTR || type->ty == ARRAY) {
-            node->rhs = new_node('*', rhs, new_node_num(get_pointed_type_size(type)));
-        }
-    } else if (lhs->ty == ND_NUM && rhs->ty == ND_LVAR) {
+        node->rhs = new_node('*', rhs, new_node_num(get_type_size(lhs->rtype->ptr_to)));
+    } else if (lhs->ty == ND_NUM && (rhs->rtype->ty == PTR || rhs->rtype->ty == ARRAY)) {
         // 1 + p -> (1 * sizeof(p)) + p
         // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
-        Type const* type = map_get(context->var_type_map, rhs->name);
-        if (type == NULL) {
-            error_at(tokens[pos]->input, "undefined variable");
+        if (rhs->rtype->ptr_to == NULL) {
+            error("ptr_to is NULL");
         }
 
         if (node->ty == '-') {
+            Token** tokens = (Token**)token_vector->data;
             error_at(tokens[pos]->input, "invalid operand");
         }
 
-        if (type->ty == PTR || type->ty == ARRAY) {
-            node->lhs = new_node('*', lhs, new_node_num(get_pointed_type_size(type)));
-        }
+        node->lhs = new_node('*', lhs, new_node_num(get_type_size(rhs->rtype->ptr_to)));
     }
 
     return node;
