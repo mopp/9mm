@@ -122,6 +122,13 @@ void _log(char const*, const char*, const char*, size_t, char const*, ...);
         exit(1);                                        \
     }
 
+#define error_if_null(var)          \
+    {                               \
+        if (var == NULL) {          \
+            error(#var " is NULL"); \
+        }                           \
+    }
+
 #define debug(...) \
     __log("\033[1;34m[DEBUG]\033[0m", __VA_ARGS__);
 

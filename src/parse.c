@@ -431,9 +431,7 @@ static Node* term(void)
 
 static Node* decl_var(Type* type)
 {
-    if (type == NULL) {
-        error("the given type must NOT be NULL");
-    }
+    error_if_null(type);
 
     Token** tokens = (Token**)(token_vector->data);
     char const* name = tokens[pos++]->name;
@@ -488,9 +486,7 @@ static Type* parse_type(void)
         error_at(tokens[pos]->input, "not type");
     }
 
-    if (tokens[pos]->name == NULL) {
-        error("Name of the token is NULL");
-    }
+    error_if_null(tokens[pos]->name);
 
     char const* name = tokens[pos++]->name;
     Type* type = NULL;
@@ -610,9 +606,7 @@ static Type* new_type(int ty, Type const* ptr_to)
 
 static inline size_t get_type_size(Type const* type)
 {
-    if (type == NULL) {
-        error("NULL is given");
-    }
+    error_if_null(type);
 
     switch (type->ty) {
         case CHAR:
@@ -654,17 +648,13 @@ static Node* convert_ptr_plus_minus(Node* node)
     if ((lhs->rtype->ty == PTR || lhs->rtype->ty == ARRAY) && rhs->rtype->ty == INT) {
         // p + 1 -> p + (1 * sizeof(p))
         // p - 1 -> p - (1 * sizeof(p))
-        if (lhs->rtype->ptr_to == NULL) {
-            error("ptr_to is NULL");
-        }
+        error_if_null(lhs->rtype->ptr_to);
 
         node->rhs = new_node('*', rhs, new_node_num(get_type_size(lhs->rtype->ptr_to)));
     } else if (lhs->rtype->ty == INT && (rhs->rtype->ty == PTR || rhs->rtype->ty == ARRAY)) {
         // 1 + p -> (1 * sizeof(p)) + p
         // 1 - p -> (1 * sizeof(p)) - p (FORBIDDEN)
-        if (rhs->rtype->ptr_to == NULL) {
-            error("ptr_to is NULL");
-        }
+        error_if_null(rhs->rtype->ptr_to);
 
         if (node->ty == '-') {
             Token** tokens = (Token**)token_vector->data;
