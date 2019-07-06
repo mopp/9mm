@@ -26,7 +26,7 @@ mul        = unary ("*" unary | "/" unary)*
 unary      = "sizeof" unary |
              ("+" | "-" | "&" | "*")? term
 term       = num |
-             ident ("(" (expr ("," expr)*)* ")")? |
+             ident (" (expr ("," expr)*)* ")" |
              ident ("[" expr "]")? |
              decl_var |
              "(" expr ")
