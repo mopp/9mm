@@ -127,3 +127,5 @@ try 2  'int main() { int x[4]; x[0] = 1; x[1] = 1; --x[0]; ++x[1]; return x[0]+x
 try 1  'int main() { int x; x = 0; x++; return x; }'
 try 2  'int main() { int x; x = 0; if (x++==0) ++x; return x; }'
 try 1  'int main() { int x; x = 1; x--; ++x; return x; }'
+try 2  'int main() { int x[4]; x[0] = 1; x[1] = 1; x[0]--; x[1]++; return x[0]+x[1]; }'
+try 2  'int main() { char x[4]; x[0] = 1; x[1] = 1; x[0]--; x[1]++; return x[0]+x[1]; }'

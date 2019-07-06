@@ -307,7 +307,6 @@ void gen(Node const* node)
     printf("  push rax\n");
 }
 
-
 // Push the address of the given variable on the stack top.
 static void gen_var_addr(Node const* node)
 {

@@ -494,8 +494,9 @@ static Node* ref_var(void)
         node = new_node('+', node, node_index_expr);
         node->rtype = type;
 
-        return new_node(ND_DEREF, node, NULL);
+        node = new_node(ND_DEREF, node, NULL);
     }
+
 
     if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i
