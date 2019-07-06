@@ -11,21 +11,21 @@ enum {
     // 抽象構文木の型を表す値
     ND_NUM = 256, // 整数のノードの型
     ND_RETURN,
-    ND_LVAR_NEW, // Declare local variable.
-    ND_LVAR,     // Reference local variable.
-    ND_GVAR_NEW, // Declare global variable.
-    ND_GVAR,     // Reference global variable.
-    ND_IF,       // if
-    ND_WHILE,    // while
-    ND_FOR,      // for
-    ND_BLOCK,    // "{" stmt* "}"
-    ND_CALL,     // 関数呼び出し
-    ND_FUNCTION, // 関数定義
-    ND_REF,      // reference
-    ND_DEREF,    // dereference
-    ND_STR,      // String literal
-    ND_INCL,     // ++
-    ND_DECL,     // --
+    ND_LVAR_NEW,  // Declare local variable.
+    ND_LVAR,      // Reference local variable.
+    ND_GVAR_NEW,  // Declare global variable.
+    ND_GVAR,      // Reference global variable.
+    ND_IF,        // if
+    ND_WHILE,     // while
+    ND_FOR,       // for
+    ND_BLOCK,     // "{" stmt* "}"
+    ND_CALL,      // 関数呼び出し
+    ND_FUNCTION,  // 関数定義
+    ND_REF,       // reference
+    ND_DEREF,     // dereference
+    ND_STR,       // String literal
+    ND_INCL_POST, // i++
+    ND_DECL_POST, // i--
 
     // トークンの型を表す値
     TK_RETURN,

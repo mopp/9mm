@@ -11,6 +11,16 @@ static void gen_var_addr(Node const*);
 
 void gen(Node const* node)
 {
+    if (node->ty == ND_INCL_POST || node->ty == ND_DECL_POST) {
+        // Load value from variable.
+        gen(node->lhs);
+        // Keep the loaded value on the stack and update the variable.
+        gen(node->rhs);
+        // Discard the result of update.
+        printf("  pop rax\n");
+        return;
+    }
+
     if (node->ty == ND_STR) {
         printf("  lea rax, %s\n", node->label);
         printf("  push rax\n");

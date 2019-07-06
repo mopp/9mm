@@ -497,6 +497,16 @@ static Node* ref_var(void)
         return new_node(ND_DEREF, node, NULL);
     }
 
+    if (consume(TK_INCL)) {
+        // i++ -> tmp = i, i = i + 1, i
+        Node* update_node = new_node('=', node, new_node('+', node, new_node_num(1)));
+        return new_node(ND_INCL_POST, node, update_node);
+    } else if (consume(TK_DECL)) {
+        // i-- -> tmp = i, i = i - 1, i
+        Node* update_node = new_node('=', node, new_node('-', node, new_node_num(1)));
+        return new_node(ND_DECL_POST, node, update_node);
+    }
+
     return node;
 }
 
