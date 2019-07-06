@@ -219,7 +219,7 @@ void gen(Node const* node)
         if (node->rtype->ty != ARRAY) {
             printf("  pop rax\n");
             if (node->rtype->size == 1) {
-                printf("  movsx ecx, BYTE PTR [rax]\n");
+                printf("  movzx rax, BYTE PTR [rax]\n");
             } else if (node->rtype->size == 4) {
                 printf("  mov eax, [rax]\n");
             } else {
