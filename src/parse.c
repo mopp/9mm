@@ -17,6 +17,7 @@ static Node* mul(void);
 static Node* unary(void);
 static Node* term(void);
 static Node* decl_var(Type*);
+static Node* ref_var(void);
 static Type* parse_type(void);
 static bool consume(int);
 static bool is_type(void);
@@ -369,46 +370,7 @@ static Node* term(void)
         } else if (--pos, is_type()) {
             return decl_var(parse_type());
         } else {
-            // Reference local variable.
-            char const* name = tokens[pos++]->name;
-            Node* node = NULL;
-
-            Type const* type = map_get(context->var_type_map, name);
-            if (type != NULL) {
-                node = new_node(ND_LVAR, NULL, NULL);
-            } else {
-                type = map_get(gvar_type_map, name);
-                if (type != NULL) {
-                    node = new_node(ND_GVAR, NULL, NULL);
-                } else {
-                    error_at(tokens[pos - 1]->input, "Not declared variable is used");
-                }
-            }
-
-            node->name = name;
-            node->rtype = type;
-
-            if (consume('[')) {
-                // Accessing the array argument via the given index.
-                if (node->rtype->ty != ARRAY && node->rtype->ty != PTR) {
-                    error_at(tokens[pos - 2]->input, "Array or pointer only can be accessed via index");
-                }
-
-                // Accessing the array via the given index.
-                Node* node_index_expr = expr();
-
-                if (!consume(']')) {
-                    error_at(tokens[pos - 1]->input, "']' is missing");
-                }
-
-                // a[0] -> *(a + 0).
-                node = new_node('+', node, node_index_expr);
-                node->rtype = type;
-
-                return new_node(ND_DEREF, node, NULL);
-            }
-
-            return node;
+            return ref_var();
         }
     } else if (tokens[pos]->ty == TK_STR) {
         Node* node = new_node(ND_STR, NULL, NULL);
@@ -422,6 +384,18 @@ static Node* term(void)
         pos++;
 
         return node;
+    } else if (tokens[pos]->ty == TK_INCL) {
+        // ++i; -> i = i + 1;
+        // ++a[i]; -> *(a + i) = *(a + i) + 1;
+        pos++;
+        Node* n = ref_var();
+        return new_node('=', n, new_node('+', n, new_node_num(1)));
+    } else if (tokens[pos]->ty == TK_DECL) {
+        // --i; -> i = i - 1;
+        // --a[i]; -> *(a + i) = *(a + i) - 1;
+        pos++;
+        Node* n = ref_var();
+        return new_node('=', n, new_node('-', n, new_node_num(1)));
     }
 
     error_at(tokens[pos]->input, "unexpected token is given");
@@ -475,6 +449,55 @@ static Node* decl_var(Type* type)
 
         return node;
     }
+}
+
+static Node* ref_var(void)
+{
+    Token** tokens = (Token**)(token_vector->data);
+
+    if (tokens[pos]->ty != TK_IDENT) {
+        error_at(tokens[pos]->input, "Not variable name");
+    }
+
+    char const* name = tokens[pos++]->name;
+    Node* node = NULL;
+
+    Type const* type = map_get(context->var_type_map, name);
+    if (type != NULL) {
+        node = new_node(ND_LVAR, NULL, NULL);
+    } else {
+        type = map_get(gvar_type_map, name);
+        if (type != NULL) {
+            node = new_node(ND_GVAR, NULL, NULL);
+        } else {
+            error_at(tokens[pos - 1]->input, "Not declared variable is used");
+        }
+    }
+
+    node->name = name;
+    node->rtype = type;
+
+    if (consume('[')) {
+        // Accessing the array argument via the given index.
+        if (node->rtype->ty != ARRAY && node->rtype->ty != PTR) {
+            error_at(tokens[pos - 2]->input, "Array or pointer only can be accessed via index");
+        }
+
+        // Accessing the array via the given index.
+        Node* node_index_expr = expr();
+
+        if (!consume(']')) {
+            error_at(tokens[pos - 1]->input, "']' is missing");
+        }
+
+        // a[0] -> *(a + 0).
+        node = new_node('+', node, node_index_expr);
+        node->rtype = type;
+
+        return new_node(ND_DEREF, node, NULL);
+    }
+
+    return node;
 }
 
 static Type* parse_type(void)

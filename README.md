@@ -26,11 +26,12 @@ mul        = unary ("*" unary | "/" unary)*
 unary      = "sizeof" unary |
              ("+" | "-" | "&" | "*")? term
 term       = num |
-             ident (" (expr ("," expr)*)* ")" |
-             ident ("[" expr "]")? |
+             ident "(" (expr ("," expr)*)* ")" |
+             ("++" | "--")* ref_var |
              decl_var |
              "(" expr ")
 decl_var   = type ident ("[" num "]")
+ref_var    = ident ("[" expr "]")?
 type       = ident ("*")*
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]

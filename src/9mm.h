@@ -24,6 +24,8 @@ enum {
     ND_REF,      // reference
     ND_DEREF,    // dereference
     ND_STR,      // String literal
+    ND_INCL,     // ++
+    ND_DECL,     // --
 
     // トークンの型を表す値
     TK_RETURN,
@@ -40,6 +42,8 @@ enum {
     TK_GE,     // >=
     TK_SIZEOF, // sizeof
     TK_STR,    // String literal
+    TK_INCL,   // ++
+    TK_DECL    // --
 };
 
 typedef struct {

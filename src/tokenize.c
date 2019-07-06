@@ -43,6 +43,22 @@ Vector const* tokenize(char const* p)
 
         Token* token = malloc(sizeof(Token));
 
+        if (is_eq(p, "++")) {
+            token->ty = TK_INCL;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 2;
+            continue;
+        }
+
+        if (is_eq(p, "--")) {
+            token->ty = TK_DECL;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 2;
+            continue;
+        }
+
         if (*p == '"') {
             // Read string literal.
             char const* str_begin = p++;
