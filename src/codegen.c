@@ -22,10 +22,18 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_REF) {
-        if (node->lhs->ty != ND_LVAR) {
-            error("変数以外のアドレスは取得できません");
+        Node* n = node->lhs;
+        if (n->ty == ND_GVAR || n->ty == ND_LVAR) {
+            gen_var_addr(node->lhs);
+            return;
+        } else if (n->ty == ND_DEREF && n->lhs->ty == '+' && n->lhs->lhs->rtype->ty == ARRAY) {
+            // Get address of an element of an array.
+            // e.g., &a[0]
+            gen(n->lhs);
+            return;
         }
-        gen_var_addr(node->lhs);
+
+        error("You cannot get address: %zd, %zd", n->ty, n->rtype->ty);
         return;
     }
 
@@ -302,6 +310,6 @@ static void gen_var_addr(Node const* node)
         printf("  lea rax, %s\n", node->name);
         printf("  push rax\n");
     } else {
-        error("代入の左辺値が変数ではありません");
+        error("You can only get address of variable");
     }
 }

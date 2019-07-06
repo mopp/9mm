@@ -286,7 +286,6 @@ static Node* add(void)
         if (op == '+' || op == '-') {
             ++pos;
             node = new_node(op, node, mul());
-            node = convert_ptr_plus_minus(node);
         } else {
             return node;
         }
@@ -402,8 +401,9 @@ static Node* term(void)
                     error_at(tokens[pos - 1]->input, "']' is missing");
                 }
 
+                // a[0] -> *(a + 0).
                 node = new_node('+', node, node_index_expr);
-                node = convert_ptr_plus_minus(node);
+                node->rtype = type;
 
                 return new_node(ND_DEREF, node, NULL);
             }
@@ -568,6 +568,11 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = new_type(PTR, new_type(CHAR, NULL));
             break;
         case ND_DEREF:
+            if (lhs->rtype->ptr_to == NULL) {
+                error("You can dereference only pointer or array");
+            }
+            node->rtype = lhs->rtype->ptr_to;
+            break;
         case ND_RETURN:
             node->rtype = lhs->rtype;
             break;
@@ -584,7 +589,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = NULL;
     }
 
-    return node;
+    return convert_ptr_plus_minus(node);
 }
 
 static Node* new_node_num(int val)
@@ -638,7 +643,7 @@ static inline Context* new_context(void)
 static Node* convert_ptr_plus_minus(Node* node)
 {
     if (node->ty != '+' && node->ty != '-') {
-        error("Converting pointer calculation is for only '+' and '-'");
+        return node;
     }
 
     Node* lhs = node->lhs;
