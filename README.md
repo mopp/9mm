@@ -7,7 +7,7 @@ based on [低レイヤを知りたい人のためのCコンパイラ作成入門
 # Production rule
 ```txt
 program    = global
-global     = (decl_var ";")* | 
+global     = (decl_var ";")* |
              function*
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
 block      = "{" stmt* "}"
@@ -27,7 +27,7 @@ unary      = "sizeof" unary |
              ("+" | "-" | "&" | "*")? term
 term       = num |
              ident ("(" (expr ("," expr)*)* ")")? |
-             ident "[" expr "]" |
+             ident ("[" expr "]")? |
              decl_var |
              "(" expr ")
 decl_var   = type ident ("[" num "]")
