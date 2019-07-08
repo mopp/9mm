@@ -10,6 +10,7 @@ static Node* block(void);
 static Node* stmt(void);
 static Node* expr(void);
 static Node* assign(void);
+static Node* and(void);
 static Node* equality(void);
 static Node* relational(void);
 static Node* add(void);
@@ -238,9 +239,17 @@ static Node* expr(void)
 
 static Node* assign(void)
 {
-    Node* node = equality();
+    Node* node = and();
     if (consume('='))
         node = new_node('=', node, assign());
+    return node;
+}
+
+static Node* and(void)
+{
+    Node* node = equality();
+    if (consume(TK_AND))
+        node = new_node(ND_AND, node, and());
     return node;
 }
 
@@ -496,7 +505,6 @@ static Node* ref_var(void)
 
         node = new_node(ND_DEREF, node, NULL);
     }
-
 
     if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i

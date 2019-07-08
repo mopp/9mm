@@ -11,6 +11,25 @@ static void gen_var_addr(Node const*);
 
 void gen(Node const* node)
 {
+    if (node->ty == ND_AND) {
+        gen(node->lhs);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je .false_%p\n", node);
+        gen(node->rhs);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  jne .true_%p\n", node);
+        printf(".false_%p:\n", node);
+        printf("  push 0\n");
+        printf("  jmp .end_and_%p\n", node);
+        printf(".true_%p:\n", node);
+        printf("  push 1\n");
+        printf(".end_and_%p:\n", node);
+
+        return;
+    }
+
     if (node->ty == ND_INCL_POST || node->ty == ND_DECL_POST) {
         // Load value from variable.
         gen(node->lhs);

@@ -26,6 +26,7 @@ enum {
     ND_STR,       // String literal
     ND_INCL_POST, // i++
     ND_DECL_POST, // i--
+    ND_AND,       // &&
 
     // トークンの型を表す値
     TK_RETURN,
@@ -43,7 +44,8 @@ enum {
     TK_SIZEOF, // sizeof
     TK_STR,    // String literal
     TK_INCL,   // ++
-    TK_DECL    // --
+    TK_DECL,   // --
+    TK_AND     // &&
 };
 
 typedef struct {
