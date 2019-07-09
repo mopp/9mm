@@ -10,7 +10,7 @@ static Node* block(void);
 static Node* stmt(void);
 static Node* expr(void);
 static Node* assign(void);
-static Node* and(void);
+static Node* and_or(void);
 static Node* equality(void);
 static Node* relational(void);
 static Node* add(void);
@@ -239,17 +239,20 @@ static Node* expr(void)
 
 static Node* assign(void)
 {
-    Node* node = and();
+    Node* node = and_or();
     if (consume('='))
         node = new_node('=', node, assign());
     return node;
 }
 
-static Node* and(void)
+static Node* and_or(void)
 {
     Node* node = equality();
-    if (consume(TK_AND))
-        node = new_node(ND_AND, node, and());
+    if (consume(TK_AND)) {
+        node = new_node(ND_AND, node, and_or());
+    } else if (consume(TK_OR)) {
+        node = new_node(ND_OR, node, and_or());
+    }
     return node;
 }
 

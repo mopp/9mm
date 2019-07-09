@@ -137,3 +137,7 @@ try 1 'int main() { int a; a = 1; int b; b = 0; if (a==1&&b==0) return 1; else r
 try 0 'int main() { int a; a = 1; int b; b = 0; if (a==1&&b==1) return 1; else return 0; }'
 try 1 'int main() { int a; a = 1; int b; b = 0; if (a==1&&b==0&&1) return 1; else return 0; }'
 try 0 'int main() { int a; a = 1; int b; b = 0; if (a==1&&b==0&&1&&0) return 1; else return 0; }'
+try 1 'int main() { return 1||1; }'
+try 1 'int main() { return 0||1; }'
+try 1 'int main() { return 1||0; }'
+try 0 'int main() { return 0||0; }'

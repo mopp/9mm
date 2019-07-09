@@ -30,6 +30,25 @@ void gen(Node const* node)
         return;
     }
 
+    if (node->ty == ND_OR) {
+        gen(node->lhs);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  jne .true_%p\n", node);
+        gen(node->rhs);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  jne .true_%p\n", node);
+        printf(".false_%p:\n", node);
+        printf("  push 0\n");
+        printf("  jmp .end_or_%p\n", node);
+        printf(".true_%p:\n", node);
+        printf("  push 1\n");
+        printf(".end_or_%p:\n", node);
+
+        return;
+    }
+
     if (node->ty == ND_INCL_POST || node->ty == ND_DECL_POST) {
         // Load value from variable.
         gen(node->lhs);

@@ -19,7 +19,7 @@ stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
              expr ";"
 expr       = assign
 assign     = and ("=" assign)?
-and        = equality ("&&" and)?
+and        = equality (("&&" | "||") and)?
 equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
