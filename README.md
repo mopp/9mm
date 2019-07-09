@@ -33,7 +33,7 @@ term       = num |
              "(" expr ")
 decl_var   = type ident ("[" num "]")
 ref_var    = ident ("[" expr "]")? ("++" | "--")*
-type       = ident ("const"+ "*")*
+type       = "static"+ ident ("const"+ "*")*
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]
 num        = [0-9]+

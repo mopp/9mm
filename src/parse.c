@@ -526,6 +526,12 @@ static Type* parse_type(void)
 {
     Token** tokens = (Token**)(token_vector->data);
 
+    // Ignore static.
+    if (tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "static") == 0) {
+        // FIXME: handle static identifier.
+        ++pos;
+    }
+
     if (tokens[pos]->ty != TK_IDENT) {
         // TODO: Confirm is the given type exist?
         error_at(tokens[pos]->input, "not type");
@@ -573,7 +579,7 @@ static bool consume(int ty)
 static bool is_type(void)
 {
     Token** tokens = (Token**)(token_vector->data);
-    return tokens[pos]->ty == TK_IDENT && (strcmp(tokens[pos]->name, "int") == 0 || strcmp(tokens[pos]->name, "char") == 0);
+    return tokens[pos]->ty == TK_IDENT && (strcmp(tokens[pos]->name, "int") == 0 || strcmp(tokens[pos]->name, "char") == 0 || strcmp(tokens[pos]->name, "static") == 0);
 }
 
 static Node* new_node(int ty, Node* lhs, Node* rhs)
