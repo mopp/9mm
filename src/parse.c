@@ -541,8 +541,18 @@ static Type* parse_type(void)
         type = new_type(INT, NULL);
     }
 
-    while (consume('*')) {
-        // ポインタ型の解析
+    while (1) {
+        // Ignore const.
+        if (tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "const") == 0) {
+            // FIXME: handle const type.
+            ++pos;
+        }
+
+        // Check wheather the type is pointer or not.
+        if (!consume('*')) {
+            break;
+        }
+
         type = new_type(PTR, type);
     }
 
