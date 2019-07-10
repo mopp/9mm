@@ -6,6 +6,7 @@
 
 static Node* global(void);
 static Node* function(Type*);
+static void strut(void);
 static Node* block(void);
 static Node* stmt(void);
 static Node* expr(void);
@@ -21,7 +22,6 @@ static Node* decl_var(Type*);
 static Node* ref_var(void);
 static Type* parse_type(void);
 static bool consume(int);
-static bool is_type(void);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int, Type const*);
@@ -44,6 +44,9 @@ static Map* gvar_type_map = NULL;
 // String literal to label map.
 Map* str_label_map = NULL;
 
+// Name to user defined type map.
+Map* user_types = NULL;
+
 Node const* const* program(Vector const* tv)
 {
     token_vector = tv;
@@ -52,6 +55,7 @@ Node const* const* program(Vector const* tv)
 
     gvar_type_map = new_map();
     str_label_map = new_map();
+    user_types = new_map();
 
     size_t i = 0;
     Node const** code = malloc(sizeof(Node*) * 64);
@@ -71,6 +75,10 @@ static Node* global()
     if (tokens[pos]->ty == TK_IDENT && tokens[pos + 1]->ty == '(') {
         // Define function.
         return function(type);
+    } else if (tokens[pos]->ty == TK_STRUCT) {
+        // FIXME:
+        strut();
+        return global();
     } else {
         // Declare global variable.
         Node* node = decl_var(type);
@@ -119,6 +127,51 @@ static Node* function(Type* type)
     context = prev_context;
 
     return node;
+}
+
+static void strut(void)
+{
+    if (!consume(TK_STRUCT)) {
+        error("not struct");
+    }
+
+    Token** tokens = (Token**)(token_vector->data);
+    if (tokens[pos]->ty != TK_IDENT) {
+        error_at(tokens[pos]->input, "struct name has to be identifier");
+    }
+
+    UserType* user_type = malloc(sizeof(UserType));
+    user_type->name_type_map = new_map();
+
+    user_type->name = tokens[pos++]->name;
+
+    if (!consume('{')) {
+        error_at(tokens[pos]->input, "You need { here");
+    }
+
+    while (!consume('}')) {
+        Type* member_type = parse_type();
+        if (tokens[pos]->ty != TK_IDENT) {
+            error_at(tokens[pos]->input, "struct name has to be identifier");
+        }
+
+        char const* member_name = tokens[pos++]->name;
+        map_put(user_type->name_type_map, member_name, member_type);
+
+        if (!consume(';')) {
+            error_at(tokens[pos]->input, "';' is required");
+        }
+    }
+
+    if (!consume(';')) {
+        error_at(tokens[pos]->input, "';' is required");
+    }
+
+    if (user_type->name_type_map->keys->len == 0) {
+        error_at(tokens[pos]->input, "struct must have a field at least");
+    }
+
+    map_put(user_types, user_type->name, user_type);
 }
 
 static Node* block(void)
@@ -361,26 +414,27 @@ static Node* term(void)
     } else if (tokens[pos]->ty == TK_NUM) {
         // For number.
         return new_node_num(tokens[pos++]->val);
+    } else if (tokens[pos]->ty == TK_IDENT && tokens[pos + 1]->ty == '(') {
+        // Function call.
+        Node* node = new_node(ND_CALL, NULL, NULL);
+        node->call->name = tokens[pos]->name;
+        node->call->arguments = new_vector();
+
+        pos += 2;
+
+        while (!consume(')')) {
+            // Store the argument.
+            vec_push(node->call->arguments, expr());
+
+            // For the next argument.
+            consume(',');
+        }
+
+        return node;
     } else if (tokens[pos]->ty == TK_IDENT) {
-        char const* ident = tokens[pos++]->name;
-
-        if (consume('(')) {
-            // Function call.
-            Node* node = new_node(ND_CALL, NULL, NULL);
-            node->call->name = ident;
-            node->call->arguments = new_vector();
-
-            while (!consume(')')) {
-                // Store the argument.
-                vec_push(node->call->arguments, expr());
-
-                // For the next argument.
-                consume(',');
-            }
-
-            return node;
-        } else if (--pos, is_type()) {
-            return decl_var(parse_type());
+        Type* type = parse_type();
+        if (type != NULL) {
+            return decl_var(type);
         } else {
             return ref_var();
         }
@@ -533,19 +587,21 @@ static Type* parse_type(void)
     }
 
     if (tokens[pos]->ty != TK_IDENT) {
-        // TODO: Confirm is the given type exist?
-        error_at(tokens[pos]->input, "not type");
+        return NULL;
     }
 
     error_if_null(tokens[pos]->name);
 
-    char const* name = tokens[pos++]->name;
+    char const* type_name = tokens[pos]->name;
     Type* type = NULL;
-    if (strcmp(name, "char") == 0) {
+    if (strcmp(type_name, "char") == 0) {
         type = new_type(CHAR, NULL);
-    } else {
+    } else if (strcmp(type_name, "int") == 0) {
         type = new_type(INT, NULL);
+    } else {
+        return NULL;
     }
+    ++pos;
 
     while (1) {
         // Ignore const.
@@ -574,12 +630,6 @@ static bool consume(int ty)
         return false;
     pos++;
     return true;
-}
-
-static bool is_type(void)
-{
-    Token** tokens = (Token**)(token_vector->data);
-    return tokens[pos]->ty == TK_IDENT && (strcmp(tokens[pos]->name, "int") == 0 || strcmp(tokens[pos]->name, "char") == 0 || strcmp(tokens[pos]->name, "static") == 0);
 }
 
 static Node* new_node(int ty, Node* lhs, Node* rhs)

@@ -47,7 +47,8 @@ enum {
     TK_INCL,   // ++
     TK_DECL,   // --
     TK_AND,    // &&
-    TK_OR      // ||
+    TK_OR,     // ||
+    TK_STRUCT  // struct
 };
 
 typedef struct {
@@ -90,13 +91,20 @@ typedef struct {
     Vector* arguments;
 } NodeCall;
 
+typedef struct {
+    char const* name;
+    Map* name_type_map; // Member name -> its type
+} UserType;
+
 typedef struct Type {
     enum { CHAR,
            INT,
            PTR,
-           ARRAY } ty;
+           ARRAY,
+           USER } ty;
     struct Type const* ptr_to;
     size_t size;
+    UserType* user_type; // Valid if ty is USER
 } Type;
 
 typedef struct Node {

@@ -9,6 +9,8 @@ based on [低レイヤを知りたい人のためのCコンパイラ作成入門
 program    = global
 global     = (decl_var ";")* |
              function*
+             struct*
+struct     = "struct" ident "{" decl_var; "}" ";"
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
 block      = "{" stmt* "}"
 stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
@@ -33,7 +35,7 @@ term       = num |
              "(" expr ")
 decl_var   = type ident ("[" num "]")
 ref_var    = ident ("[" expr "]")? ("++" | "--")*
-type       = "static"+ ident ("const"+ "*")*
+type       = "static"? "struct"? ident ("const"+ "*")*
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]
 num        = [0-9]+
