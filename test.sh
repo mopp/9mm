@@ -155,3 +155,4 @@ try 5 'struct hoge { int x; int y; }; int main() { struct hoge obj; struct hoge*
 try 0 'struct hoge { int x; int y; }; int main() { return foo(); } struct hoge* foo() { return 0; }'
 try 8 'struct hoge { int x; int y; }; int main() { return sizeof(struct hoge); }'
 try 128 'int main() { return sizeof(void*) * 16; }'
+try 0 'int main() { return; }'

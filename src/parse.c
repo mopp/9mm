@@ -282,7 +282,13 @@ static Node* stmt(void)
         node = block();
     } else {
         if (consume(TK_RETURN)) {
-            node = new_node(ND_RETURN, expr(), NULL);
+            if (tokens[pos]->ty == ';') {
+                // return empty.
+                node = new_node(ND_RETURN, new_node_num(0), NULL);
+            } else {
+                // return value.
+                node = new_node(ND_RETURN, expr(), NULL);
+            }
         } else {
             node = expr();
         }
