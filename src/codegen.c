@@ -70,18 +70,7 @@ void gen(Node const* node)
     }
 
     if (node->ty == ND_REF) {
-        Node* n = node->lhs;
-        if (n->ty == ND_GVAR || n->ty == ND_LVAR) {
-            gen_var_addr(node->lhs);
-            return;
-        } else if (n->ty == ND_DEREF && n->lhs->ty == '+' && n->lhs->lhs->rtype->ty == ARRAY) {
-            // Get address of an element of an array.
-            // e.g., &a[0]
-            gen(n->lhs);
-            return;
-        }
-
-        error("You cannot get address: %zd, %zd", n->ty, n->rtype->ty);
+        gen_var_addr(node->lhs);
         return;
     }
 
@@ -270,12 +259,8 @@ void gen(Node const* node)
     }
 
     if (node->ty == '=') {
-        // `a = 1`に対応する.
-        if (node->lhs->ty == ND_DEREF || node->lhs->ty == ND_STR) {
-            gen(node->lhs->lhs);
-        } else {
-            gen_var_addr(node->lhs);
-        }
+        // Assignment.
+        gen_var_addr(node->lhs);
         gen(node->rhs);
 
         printf("  pop rdi\n");
@@ -349,13 +334,16 @@ void gen(Node const* node)
 static void gen_var_addr(Node const* node)
 {
     if (node->ty == ND_LVAR) {
-        printf("  # Reference local var\n");
+        printf("  # Reference local var: %s\n", node->name);
         printf("  mov rax, rbp\n");
         printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
         printf("  push rax\n");
     } else if (node->ty == ND_GVAR) {
+        printf("  # Reference global var: %s\n", node->name);
         printf("  lea rax, %s\n", node->name);
         printf("  push rax\n");
+    } else if (node->ty == ND_DEREF || node->ty == ND_STR) {
+        gen(node->lhs);
     } else {
         error("You can only get address of variable");
     }
