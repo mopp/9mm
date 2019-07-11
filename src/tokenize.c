@@ -43,6 +43,14 @@ Vector const* tokenize(char const* p)
 
         Token* token = malloc(sizeof(Token));
 
+        if (is_eq(p, "->")) {
+            token->ty = TK_ARROW;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 2;
+            continue;
+        }
+
         if (is_eq(p, "struct")) {
             token->ty = TK_STRUCT;
             token->input = p;

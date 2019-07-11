@@ -151,3 +151,5 @@ try 8 'struct hoge { int x; int y; }; int main() { struct hoge obj; obj.x = 3; r
 try 5 'struct hoge { int x; int y; }; int main() { struct hoge obj; obj.x = 3; obj.y=2; return obj.x+obj.y; }'
 try 3 'struct hoge { int x; int y; }; int main() { struct hoge obj; obj.x = 3; int* a; a = &obj.x; *a = 3; return obj.x; }'
 try 5 'struct hoge { int x; int y; }; int main() { struct hoge obj; obj.x = 3; int* a; a = &obj.x; *a = 3; obj.x = 5; return *a; }'
+try 5 'struct hoge { int x; int y; }; int main() { struct hoge obj; struct hoge* ptr; ptr = &obj; ptr->x = 5; return obj.x; }'
+try 6 'struct hoge { int x; int y; }; int main() { struct hoge obj; struct hoge* ptr; ptr = &obj; ptr->x = 5; ptr->y = 1; return obj.x + obj.y; }'

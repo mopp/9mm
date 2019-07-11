@@ -583,6 +583,26 @@ static Node* ref_var(void)
         Node* n = new_node(ND_DOT_REF, node, NULL);
         n->member_offset = offset;
         return n;
+    } else if (consume(TK_ARROW)) {
+        // obj->x -> (*obj).x
+        if (tokens[pos]->ty != TK_IDENT) {
+            error_at(tokens[pos]->input, "member name has to be identifier");
+        }
+
+        if (node->rtype->ty != PTR) {
+            error_at(tokens[pos - 2]->input, "the variable is not pointer");
+        }
+
+        UserType* user_type = node->rtype->ptr_to->user_type;
+        error_if_null(user_type);
+
+        char const* member_name = tokens[pos++]->name;
+        size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+
+        Node* n = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
+        n->member_offset = offset;
+
+        return n;
     } else if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i
         Node* update_node = new_node('=', node, new_node('+', node, new_node_num(1)));

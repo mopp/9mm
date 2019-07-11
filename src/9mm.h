@@ -29,6 +29,7 @@ enum {
     ND_AND,       // &&
     ND_OR,        // ||
     ND_DOT_REF,   // obj.x
+    ND_ARROW_REF, // obj->x
 
     // トークンの型を表す値
     TK_RETURN,
@@ -49,7 +50,8 @@ enum {
     TK_DECL,   // --
     TK_AND,    // &&
     TK_OR,     // ||
-    TK_STRUCT  // struct
+    TK_STRUCT, // struct
+    TK_ARROW   // obj->x
 };
 
 typedef struct {

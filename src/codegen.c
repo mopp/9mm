@@ -239,7 +239,7 @@ void gen(Node const* node)
         return;
     }
 
-    if (node->ty == ND_LVAR || node->ty == ND_GVAR || node->ty == ND_DOT_REF) {
+    if (node->ty == ND_LVAR || node->ty == ND_GVAR || node->ty == ND_DOT_REF || node->ty == ND_ARROW_REF) {
         gen_var_addr(node);
 
         error_if_null(node->rtype);
@@ -347,7 +347,7 @@ static void gen_var_addr(Node const* node)
         printf("  push rax\n");
     } else if (node->ty == ND_DEREF || node->ty == ND_STR) {
         gen(node->lhs);
-    } else if (node->ty == ND_DOT_REF) {
+    } else if (node->ty == ND_DOT_REF || node->ty == ND_ARROW_REF) {
         gen_var_addr(node->lhs);
         printf("  pop rax\n");
         printf("  add rax, %zd\n", node->member_offset);
