@@ -105,7 +105,8 @@ typedef struct Type {
            INT,
            PTR,
            ARRAY,
-           USER } ty;
+           USER,
+           VOID } ty;
     struct Type const* ptr_to;
     size_t size;
     UserType* user_type; // Valid if ty is USER

@@ -154,6 +154,10 @@ static void strut(void)
     // FIXME: Consider padding.
     while (!consume('}')) {
         Type* member_type = parse_type();
+        if (member_type == NULL) {
+            error_at(tokens[pos]->input, "undeclared type");
+        }
+
         if (tokens[pos]->ty != TK_IDENT) {
             error_at(tokens[pos]->input, "struct name has to be identifier");
         }
@@ -640,6 +644,8 @@ static Type* parse_type(void)
         type = new_type(CHAR, NULL);
     } else if (strcmp(name, "int") == 0) {
         type = new_type(INT, NULL);
+    } else if (strcmp(name, "void") == 0) {
+        type = new_type(VOID, NULL);
     } else {
         UserType* user_type = map_get(user_types, name);
         if (user_type != NULL) {
@@ -793,6 +799,7 @@ static inline size_t get_type_size(Type const* type)
             return 8;
         case ARRAY:
         case USER:
+        case VOID:
             // Size of array is set by yourself.
             return 0;
         default:
