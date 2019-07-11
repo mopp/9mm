@@ -28,6 +28,7 @@ enum {
     ND_DECL_POST, // i--
     ND_AND,       // &&
     ND_OR,        // ||
+    ND_DOT_REF,   // obj.x
 
     // トークンの型を表す値
     TK_RETURN,
@@ -93,7 +94,8 @@ typedef struct {
 
 typedef struct {
     char const* name;
-    Map* name_type_map; // Member name -> its type
+    size_t size;
+    Map* member_offset_map; // Member name -> its type
 } UserType;
 
 typedef struct Type {
@@ -113,8 +115,9 @@ typedef struct Node {
     struct Node* rhs;  // Right-hand-size
     Type const* rtype; // Type of result of "expr" of "Node".
     union {
-        int val;          // for "ND_NUM"
-        char const* name; // for "ND_LVAR"
+        int val;              // for "ND_NUM"
+        char const* name;     // for "ND_LVAR"
+        size_t member_offset; // for "ND_DOT_REF"
         NodeFunction* function;
         Vector* stmts;
         NodeIfElse* if_else;
@@ -154,6 +157,7 @@ Vector const* tokenize(char const*);
 // parse.c
 Node const* const* program(Vector const*);
 extern Map* str_label_map;
+extern Map* user_types;
 
 // codegen.c
 void gen(Node const*);

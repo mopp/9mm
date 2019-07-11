@@ -34,7 +34,7 @@ term       = num |
              decl_var |
              "(" expr ")
 decl_var   = type ident ("[" num "]")
-ref_var    = ident ("[" expr "]")? ("++" | "--")*
+ref_var    = ident ("[" expr "]")? ("." ident)? ("++" | "--")*
 type       = "static"? "struct"? ident ("const"+ "*")*
 ident      = chars (chars | num)+
 chars      = [a-zA-Z_]

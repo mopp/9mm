@@ -239,21 +239,24 @@ void gen(Node const* node)
         return;
     }
 
-    if (node->ty == ND_LVAR || node->ty == ND_GVAR) {
-        // 変数の値をraxにロードする.
+    if (node->ty == ND_LVAR || node->ty == ND_GVAR || node->ty == ND_DOT_REF) {
         gen_var_addr(node);
 
-        if (node->rtype->ty != ARRAY) {
-            printf("  pop rax\n");
-            if (node->rtype->size == 1) {
-                printf("  movzx rax, BYTE PTR [rax]\n");
-            } else if (node->rtype->size == 4) {
-                printf("  mov eax, [rax]\n");
-            } else {
-                printf("  mov rax, [rax]\n");
-            }
-            printf("  push rax\n");
+        error_if_null(node->rtype);
+        if (node->rtype->ty == ARRAY) {
+            return;
         }
+
+        // Load the value into rax.
+        printf("  pop rax\n");
+        if (node->rtype->size == 1) {
+            printf("  movzx rax, BYTE PTR [rax]\n");
+        } else if (node->rtype->size == 4) {
+            printf("  mov eax, [rax]\n");
+        } else {
+            printf("  mov rax, [rax]\n");
+        }
+        printf("  push rax\n");
 
         return;
     }
@@ -344,6 +347,11 @@ static void gen_var_addr(Node const* node)
         printf("  push rax\n");
     } else if (node->ty == ND_DEREF || node->ty == ND_STR) {
         gen(node->lhs);
+    } else if (node->ty == ND_DOT_REF) {
+        gen_var_addr(node->lhs);
+        printf("  pop rax\n");
+        printf("  add rax, %zd\n", node->member_offset);
+        printf("  push rax\n");
     } else {
         error("You can only get address of variable");
     }

@@ -25,6 +25,7 @@ static bool consume(int);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int, Type const*);
+static Type* new_user_type(UserType*);
 static inline size_t get_type_size(Type const*);
 static inline Context* new_context(void);
 static inline Node* convert_ptr_plus_minus(Node*);
@@ -69,16 +70,17 @@ Node const* const* program(Vector const* tv)
 
 static Node* global()
 {
+    Token** tokens = (Token**)(token_vector->data);
+    if (tokens[pos]->ty == TK_STRUCT) {
+        strut();
+        return global();
+    }
+
     Type* type = parse_type();
 
-    Token** tokens = (Token**)(token_vector->data);
     if (tokens[pos]->ty == TK_IDENT && tokens[pos + 1]->ty == '(') {
         // Define function.
         return function(type);
-    } else if (tokens[pos]->ty == TK_STRUCT) {
-        // FIXME:
-        strut();
-        return global();
     } else {
         // Declare global variable.
         Node* node = decl_var(type);
@@ -141,14 +143,15 @@ static void strut(void)
     }
 
     UserType* user_type = malloc(sizeof(UserType));
-    user_type->name_type_map = new_map();
-
     user_type->name = tokens[pos++]->name;
+    user_type->size = 0;
+    user_type->member_offset_map = new_map();
 
     if (!consume('{')) {
         error_at(tokens[pos]->input, "You need { here");
     }
 
+    // FIXME: Consider padding.
     while (!consume('}')) {
         Type* member_type = parse_type();
         if (tokens[pos]->ty != TK_IDENT) {
@@ -156,7 +159,10 @@ static void strut(void)
         }
 
         char const* member_name = tokens[pos++]->name;
-        map_put(user_type->name_type_map, member_name, member_type);
+        map_put(user_type->member_offset_map, member_name, (void*)user_type->size);
+
+        user_type->size += member_type->size;
+        free(member_type);
 
         if (!consume(';')) {
             error_at(tokens[pos]->input, "';' is required");
@@ -167,7 +173,7 @@ static void strut(void)
         error_at(tokens[pos]->input, "';' is required");
     }
 
-    if (user_type->name_type_map->keys->len == 0) {
+    if (user_type->member_offset_map->keys->len == 0) {
         error_at(tokens[pos]->input, "struct must have a field at least");
     }
 
@@ -431,7 +437,7 @@ static Node* term(void)
         }
 
         return node;
-    } else if (tokens[pos]->ty == TK_IDENT) {
+    } else if (tokens[pos]->ty == TK_IDENT || tokens[pos]->ty == TK_STRUCT) {
         Type* type = parse_type();
         if (type != NULL) {
             return decl_var(type);
@@ -563,7 +569,21 @@ static Node* ref_var(void)
         node = new_node(ND_DEREF, node, NULL);
     }
 
-    if (consume(TK_INCL)) {
+    if (consume('.')) {
+        // obj.x
+        if (tokens[pos]->ty != TK_IDENT) {
+            error_at(tokens[pos]->input, "member name has to be identifier");
+        }
+        UserType* user_type = node->rtype->user_type;
+        error_if_null(user_type);
+
+        char const* member_name = tokens[pos++]->name;
+        size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+
+        Node* n = new_node(ND_DOT_REF, node, NULL);
+        n->member_offset = offset;
+        return n;
+    } else if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i
         Node* update_node = new_node('=', node, new_node('+', node, new_node_num(1)));
         return new_node(ND_INCL_POST, node, update_node);
@@ -586,19 +606,28 @@ static Type* parse_type(void)
         ++pos;
     }
 
-    if (tokens[pos]->ty != TK_IDENT) {
+    if (tokens[pos]->ty == TK_STRUCT) {
+        ++pos;
+    } else if (tokens[pos]->ty != TK_IDENT) {
         return NULL;
     }
 
     error_if_null(tokens[pos]->name);
 
-    char const* type_name = tokens[pos]->name;
+    char const* name = tokens[pos]->name;
     Type* type = NULL;
-    if (strcmp(type_name, "char") == 0) {
+    if (strcmp(name, "char") == 0) {
         type = new_type(CHAR, NULL);
-    } else if (strcmp(type_name, "int") == 0) {
+    } else if (strcmp(name, "int") == 0) {
         type = new_type(INT, NULL);
     } else {
+        UserType* user_type = map_get(user_types, name);
+        if (user_type != NULL) {
+            type = new_user_type(user_type);
+        }
+    }
+
+    if (type == NULL) {
         return NULL;
     }
     ++pos;
@@ -685,6 +714,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = lhs->rtype->ptr_to;
             break;
         case ND_RETURN:
+        case ND_DOT_REF:
             node->rtype = lhs->rtype;
             break;
         case '+':
@@ -716,6 +746,16 @@ static Type* new_type(int ty, Type const* ptr_to)
     type->ty = ty;
     type->ptr_to = ptr_to;
     type->size = get_type_size(type);
+    type->user_type = NULL;
+
+    return type;
+}
+
+static Type* new_user_type(UserType* user_type)
+{
+    Type* type = new_type(USER, NULL);
+    type->user_type = user_type;
+    type->size = user_type->size;
 
     return type;
 }
@@ -732,6 +772,7 @@ static inline size_t get_type_size(Type const* type)
         case PTR:
             return 8;
         case ARRAY:
+        case USER:
             // Size of array is set by yourself.
             return 0;
         default:
