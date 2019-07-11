@@ -387,11 +387,27 @@ static Node* unary(void)
     Token** tokens = (Token**)(token_vector->data);
 
     if (tokens[pos]->ty == TK_SIZEOF) {
-        size_t pos_debug = ++pos;
+        size_t prev_pos = ++pos;
+
+        if (!consume('(')) {
+            error_at(tokens[pos]->input, "'(' is missing");
+        }
+
+        Type* type = parse_type();
+        if (type != NULL) {
+            if (!consume(')')) {
+                error_at(tokens[pos]->input, "')' is missing");
+            }
+
+            return new_node_num(type->size);
+        }
+
+        pos = prev_pos;
         Node* node = unary();
         if (node->rtype == NULL) {
-            error_at(tokens[pos_debug]->input, "the argument of sizeof is only expression");
+            error_at(tokens[prev_pos]->input, "the argument of sizeof is only expression or type");
         }
+
         return new_node_num(node->rtype->size);
     } else if (consume('+')) {
         return term();
