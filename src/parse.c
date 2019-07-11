@@ -309,8 +309,19 @@ static Node* expr(void)
 static Node* assign(void)
 {
     Node* node = and_or();
-    if (consume('='))
-        node = new_node('=', node, assign());
+    if (consume('=')) {
+        if (node->ty == ND_LVAR_NEW) {
+            // int x = 3; -> int x; x = 3;
+            // Convert ND_LVAR_NEW to ND_LVAR.
+            Node* node_lvar = new_node(ND_LVAR, NULL, NULL);
+            node_lvar->name = node->name;
+            node_lvar->rtype = node->rtype;
+
+            node = new_node(ND_INIT, node, new_node('=', node_lvar, assign()));
+        } else {
+            node = new_node('=', node, assign());
+        }
+    }
     return node;
 }
 

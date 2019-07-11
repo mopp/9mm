@@ -30,6 +30,7 @@ enum {
     ND_OR,        // ||
     ND_DOT_REF,   // obj.x
     ND_ARROW_REF, // obj->x
+    ND_INIT,      // int x = 3;
 
     // トークンの型を表す値
     TK_RETURN,

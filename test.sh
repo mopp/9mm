@@ -156,3 +156,5 @@ try 0 'struct hoge { int x; int y; }; int main() { return foo(); } struct hoge* 
 try 8 'struct hoge { int x; int y; }; int main() { return sizeof(struct hoge); }'
 try 128 'int main() { return sizeof(void*) * 16; }'
 try 0 'int main() { return; }'
+try 3 'int main() { int x = 3; return x; }'
+try 1 'int main() { for (int i=0; i<10; i=i+1) return 1+i; return 0; }'

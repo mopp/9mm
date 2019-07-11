@@ -261,6 +261,12 @@ void gen(Node const* node)
         return;
     }
 
+    if (node->ty == ND_INIT) {
+        gen(node->lhs);
+        gen(node->rhs);
+        return;
+    }
+
     if (node->ty == '=') {
         // Assignment.
         gen_var_addr(node->lhs);
