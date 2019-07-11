@@ -71,7 +71,7 @@ Node const* const* program(Vector const* tv)
 static Node* global()
 {
     Token** tokens = (Token**)(token_vector->data);
-    if (tokens[pos]->ty == TK_STRUCT) {
+    if (tokens[pos]->ty == TK_STRUCT && tokens[pos + 1]->ty == TK_IDENT && tokens[pos + 2]->ty == '{') {
         strut();
         return global();
     }
