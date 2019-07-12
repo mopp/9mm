@@ -146,6 +146,7 @@ static void strut(void)
     user_type->name = tokens[pos++]->name;
     user_type->size = 0;
     user_type->member_offset_map = new_map();
+    user_type->member_type_map = new_map();
 
     if (!consume('{')) {
         error_at(tokens[pos]->input, "You need { here");
@@ -164,9 +165,9 @@ static void strut(void)
 
         char const* member_name = tokens[pos++]->name;
         map_put(user_type->member_offset_map, member_name, (void*)user_type->size);
+        map_put(user_type->member_type_map, member_name, member_type);
 
         user_type->size += member_type->size;
-        free(member_type);
 
         if (!consume(';')) {
             error_at(tokens[pos]->input, "';' is required");
@@ -617,8 +618,12 @@ static Node* ref_var(void)
         char const* member_name = tokens[pos++]->name;
         size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
 
+        Type* member_type = map_get(user_type->member_type_map, member_name);
+        error_if_null(member_type);
+
         Node* n = new_node(ND_DOT_REF, node, NULL);
         n->member_offset = offset;
+        n->rtype = member_type;
         return n;
     } else if (consume(TK_ARROW)) {
         // obj->x -> (*obj).x
@@ -636,9 +641,12 @@ static Node* ref_var(void)
         char const* member_name = tokens[pos++]->name;
         size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
 
+        Type* member_type = map_get(user_type->member_type_map, member_name);
+        error_if_null(member_type);
+
         Node* n = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
         n->member_offset = offset;
-
+        n->rtype = member_type;
         return n;
     } else if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i
@@ -773,17 +781,20 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             node->rtype = lhs->rtype->ptr_to;
             break;
         case ND_RETURN:
-        case ND_DOT_REF:
             node->rtype = lhs->rtype;
             break;
         case '+':
         case '-':
         case '*':
         case '/':
+            error_if_null(lhs->rtype);
+            error_if_null(rhs->rtype);
             node->rtype = (lhs->rtype->size < rhs->rtype->size) ? rhs->rtype : lhs->rtype;
             break;
         case ND_LVAR:
         case ND_LVAR_NEW:
+        case ND_DOT_REF:
+        case ND_ARROW_REF:
         default:
             /* rtype is set outside or unused */
             node->rtype = NULL;

@@ -98,7 +98,8 @@ typedef struct {
 typedef struct {
     char const* name;
     size_t size;
-    Map* member_offset_map; // Member name -> its type
+    Map* member_offset_map; // name -> its offset
+    Map* member_type_map;   // name -> its type
 } UserType;
 
 typedef struct Type {
