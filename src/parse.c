@@ -621,10 +621,9 @@ static Node* ref_var(void)
         Type* member_type = map_get(user_type->member_type_map, member_name);
         error_if_null(member_type);
 
-        Node* n = new_node(ND_DOT_REF, node, NULL);
-        n->member_offset = offset;
-        n->rtype = member_type;
-        return n;
+        node = new_node(ND_DOT_REF, node, NULL);
+        node->member_offset = offset;
+        node->rtype = member_type;
     } else if (consume(TK_ARROW)) {
         // obj->x -> (*obj).x
         if (tokens[pos]->ty != TK_IDENT) {
@@ -644,11 +643,12 @@ static Node* ref_var(void)
         Type* member_type = map_get(user_type->member_type_map, member_name);
         error_if_null(member_type);
 
-        Node* n = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
-        n->member_offset = offset;
-        n->rtype = member_type;
-        return n;
-    } else if (consume(TK_INCL)) {
+        node = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
+        node->member_offset = offset;
+        node->rtype = member_type;
+    }
+
+    if (consume(TK_INCL)) {
         // i++ -> tmp = i, i = i + 1, i
         Node* update_node = new_node('=', node, new_node('+', node, new_node_num(1)));
         return new_node(ND_INCL_POST, node, update_node);
