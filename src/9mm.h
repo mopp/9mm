@@ -131,7 +131,8 @@ struct type {
            PTR,
            ARRAY,
            USER,
-           VOID } ty;
+           VOID,
+           SIZE_T } ty;
     struct type const* ptr_to;
     size_t size;
     UserType* user_type; // Valid if ty is USER

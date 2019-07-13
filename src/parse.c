@@ -824,6 +824,8 @@ static Type* parse_type(void)
             type = new_type(INT, NULL);
         } else if (strcmp(name, "void") == 0) {
             type = new_type(VOID, NULL);
+        } else if (strcmp(name, "size_t") == 0) {
+            type = new_type(SIZE_T, NULL);
         } else {
             UserType* user_type = map_get(user_types, name);
             if (user_type != NULL) {
@@ -982,6 +984,7 @@ static inline size_t get_type_size(Type const* type)
         case INT:
             return 4;
         case PTR:
+        case SIZE_T:
             return 8;
         case ARRAY:
         case USER:
