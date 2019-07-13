@@ -138,11 +138,11 @@ static Node* function(Type* type)
     context = node->function->context;
 
     // Parse the arguments of the function.
-    while (1) {
-        if (consume(')')) {
-            break;
-        } else if (consume(TK_EOF)) {
+    while (!consume(')')) {
+        if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "関数の)が無い");
+        } else if (strcmp(tokens[pos]->name, "void") == 0) {
+            ++pos;
         } else {
             vec_push(node->function->args, decl_var(parse_type()));
 
