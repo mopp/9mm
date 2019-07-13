@@ -619,45 +619,49 @@ static Node* ref_var(void)
     node->name = name;
     node->rtype = type;
 
-    if (consume('.')) {
-        // obj.x
-        if (tokens[pos]->ty != TK_IDENT) {
-            error_at(tokens[pos]->input, "member name has to be identifier");
+    while (1) {
+        if (consume('.')) {
+            // obj.x
+            if (tokens[pos]->ty != TK_IDENT) {
+                error_at(tokens[pos]->input, "member name has to be identifier");
+            }
+            UserType* user_type = node->rtype->user_type;
+            error_if_null(user_type);
+
+            char const* member_name = tokens[pos++]->name;
+            size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+
+            Type* member_type = map_get(user_type->member_type_map, member_name);
+            error_if_null(member_type);
+
+            node = new_node(ND_DOT_REF, node, NULL);
+            node->member_offset = offset;
+            node->rtype = member_type;
+        } else if (consume(TK_ARROW)) {
+            // obj->x -> (*obj).x
+            if (tokens[pos]->ty != TK_IDENT) {
+                error_at(tokens[pos]->input, "member name has to be identifier");
+            }
+
+            if (node->rtype->ty != PTR) {
+                error_at(tokens[pos - 2]->input, "the variable is not pointer");
+            }
+
+            UserType* user_type = node->rtype->ptr_to->user_type;
+            error_if_null(user_type);
+
+            char const* member_name = tokens[pos++]->name;
+            size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+
+            Type* member_type = map_get(user_type->member_type_map, member_name);
+            error_if_null(member_type);
+
+            node = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
+            node->member_offset = offset;
+            node->rtype = member_type;
+        } else {
+            break;
         }
-        UserType* user_type = node->rtype->user_type;
-        error_if_null(user_type);
-
-        char const* member_name = tokens[pos++]->name;
-        size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
-
-        Type* member_type = map_get(user_type->member_type_map, member_name);
-        error_if_null(member_type);
-
-        node = new_node(ND_DOT_REF, node, NULL);
-        node->member_offset = offset;
-        node->rtype = member_type;
-    } else if (consume(TK_ARROW)) {
-        // obj->x -> (*obj).x
-        if (tokens[pos]->ty != TK_IDENT) {
-            error_at(tokens[pos]->input, "member name has to be identifier");
-        }
-
-        if (node->rtype->ty != PTR) {
-            error_at(tokens[pos - 2]->input, "the variable is not pointer");
-        }
-
-        UserType* user_type = node->rtype->ptr_to->user_type;
-        error_if_null(user_type);
-
-        char const* member_name = tokens[pos++]->name;
-        size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
-
-        Type* member_type = map_get(user_type->member_type_map, member_name);
-        error_if_null(member_type);
-
-        node = new_node(ND_ARROW_REF, new_node(ND_DEREF, node, NULL), NULL);
-        node->member_offset = offset;
-        node->rtype = member_type;
     }
 
     type = node->rtype;
