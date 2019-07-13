@@ -6,8 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define is_eq(str, c_str) (strncmp((str), (c_str), sizeof((c_str)) - 1) == 0)
-
+static int is_eq(char const*, char const*);
 static Token* new_token(int, char const*);
 static char const* skip(char const*);
 static int is_alnum(char);
@@ -130,6 +129,11 @@ Vector const* tokenize(char const* p)
     vec_push(tokens, new_token(TK_EOF, p));
 
     return tokens;
+}
+
+static int is_eq(char const* p, char const* q)
+{
+    return strncmp(p, q, strlen(q)) == 0;
 }
 
 static Token* new_token(int ty, char const* p)
