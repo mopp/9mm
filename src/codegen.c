@@ -176,6 +176,12 @@ void gen(Node const* node)
         return;
     }
 
+    if (node->ty == ND_BREAK) {
+        printf("  jmp %s\n", node->break_label);
+
+        return;
+    }
+
     if (node->ty == ND_WHILE) {
         printf("  .L_while_begin_%p:\n", node);
 
@@ -183,12 +189,12 @@ void gen(Node const* node)
 
         printf("  pop rax\n");
         printf("  cmp rax, 0\n");
-        printf("  je .L_while_end_%p\n", node);
+        printf("  je %s\n", node->break_label);
 
         gen(node->rhs);
         printf("  jmp .L_while_begin_%p\n", node);
 
-        printf("  .L_while_end_%p:\n", node);
+        printf("  %s:\n", node->break_label);
 
         return;
     }

@@ -30,7 +30,8 @@ enum {
     ND_OR,        // ||
     ND_DOT_REF,   // obj.x
     ND_ARROW_REF, // obj->x
-    ND_INIT,      // int x = 3;
+    ND_INIT,      // int x = 3
+    ND_BREAK,     // break
 
     // トークンの型を表す値
     TK_RETURN,
@@ -56,7 +57,8 @@ enum {
     TK_ADD_ASIGN, // +=
     TK_SUB_ASIGN, // -=
     TK_MUL_ASIGN, // *=
-    TK_DIV_ASIGN  // /=
+    TK_DIV_ASIGN, // /=
+    TK_BREAK      // break
 };
 
 typedef struct {
@@ -70,9 +72,10 @@ typedef struct {
 
 typedef struct {
     size_t count_vars;
-    size_t current_offset; // The offset of the current "rbp" register.
-    Map* var_offset_map;   // variable name -> offset.
-    Map* var_type_map;     // variable name -> "Type".
+    size_t current_offset;   // The offset of the current "rbp" register.
+    Map* var_offset_map;     // variable name -> offset.
+    Map* var_type_map;       // variable name -> "Type".
+    char const* break_label; // Label for break in current loop
 } Context;
 
 typedef struct {
@@ -133,6 +136,7 @@ typedef struct Node {
         NodeFor* fors;
         NodeCall* call;
         char const* label; // for "ND_STR"
+        char const* break_label;
         void* tv;
     };
 } Node;

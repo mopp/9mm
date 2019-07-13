@@ -241,10 +241,19 @@ static Node* stmt(void)
             error_at(tokens[pos]->input, "whileの条件部は')'で終わらなければならない");
         }
 
+        char* break_label = malloc(sizeof(char) * 128);
+        sprintf(break_label, ".L_while_end_%p", lhs);
+
+        char const* prev = context->break_label;
+        context->break_label = break_label;
+
         // Body.
         Node* rhs = stmt();
 
+        context->break_label = prev;
+
         node = new_node(ND_WHILE, lhs, rhs);
+        node->break_label = break_label;
     } else if (consume(TK_FOR)) {
         if (!consume('(')) {
             error_at(tokens[pos]->input, "forの直後は'('から始まらなくてはならない");
@@ -290,6 +299,9 @@ static Node* stmt(void)
                 // return value.
                 node = new_node(ND_RETURN, expr(), NULL);
             }
+        } else if (consume(TK_BREAK)) {
+            node = new_node(ND_BREAK, NULL, NULL);
+            node->break_label = context->break_label;
         } else {
             node = expr();
         }

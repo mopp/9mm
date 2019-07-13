@@ -17,8 +17,9 @@ stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
              "while" "(" expr ")" stmt |
              "for" "(" expr? ";" expr? ")" stmt |
              block |
-             "return" expr? ";"
-             expr ";"
+             "return" expr? ";" |
+             expr ";" |
+             "break" ";"
 expr       = ("(" type ")")? assign
 assign     = and (("=" | "+=" | "-=" | "*=" | "/=") expr)?
 and        = equality (("&&" | "||") and)?

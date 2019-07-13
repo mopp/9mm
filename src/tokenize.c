@@ -43,6 +43,14 @@ Vector const* tokenize(char const* p)
 
         Token* token = malloc(sizeof(Token));
 
+        if (is_eq(p, "break")) {
+            token->ty = TK_BREAK;
+            token->input = p;
+            vec_push(tokens, token);
+            p += 5;
+            continue;
+        }
+
         if (is_eq(p, "+=")) {
             token->ty = TK_ADD_ASIGN;
             token->input = p;
