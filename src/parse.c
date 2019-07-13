@@ -322,7 +322,20 @@ static Node* assign(void)
         } else {
             node = new_node('=', node, assign());
         }
+    } else if (consume(TK_ADD_ASIGN)) {
+        // x += 1;
+        node = new_node('=', node, new_node('+', node, assign()));
+    } else if (consume(TK_SUB_ASIGN)) {
+        // x -= 1;
+        node = new_node('=', node, new_node('-', node, assign()));
+    } else if (consume(TK_MUL_ASIGN)) {
+        // x *= 1;
+        node = new_node('=', node, new_node('*', node, assign()));
+    } else if (consume(TK_DIV_ASIGN)) {
+        // x /= 1;
+        node = new_node('=', node, new_node('/', node, assign()));
     }
+
     return node;
 }
 

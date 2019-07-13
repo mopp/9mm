@@ -34,25 +34,29 @@ enum {
 
     // トークンの型を表す値
     TK_RETURN,
-    TK_IDENT,  // 識別子
-    TK_NUM,    // 整数トークン
-    TK_EOF,    // 入力の終わりを表すトークン
-    TK_IF,     // if
-    TK_ELSE,   // else
-    TK_WHILE,  // while
-    TK_FOR,    // for
-    TK_EQ,     // ==
-    TK_NE,     // !=
-    TK_LE,     // <=
-    TK_GE,     // >=
-    TK_SIZEOF, // sizeof
-    TK_STR,    // String literal
-    TK_INCL,   // ++
-    TK_DECL,   // --
-    TK_AND,    // &&
-    TK_OR,     // ||
-    TK_STRUCT, // struct
-    TK_ARROW   // obj->x
+    TK_IDENT,     // 識別子
+    TK_NUM,       // 整数トークン
+    TK_EOF,       // 入力の終わりを表すトークン
+    TK_IF,        // if
+    TK_ELSE,      // else
+    TK_WHILE,     // while
+    TK_FOR,       // for
+    TK_EQ,        // ==
+    TK_NE,        // !=
+    TK_LE,        // <=
+    TK_GE,        // >=
+    TK_SIZEOF,    // sizeof
+    TK_STR,       // String literal
+    TK_INCL,      // ++
+    TK_DECL,      // --
+    TK_AND,       // &&
+    TK_OR,        // ||
+    TK_STRUCT,    // struct
+    TK_ARROW,     // obj->x
+    TK_ADD_ASIGN, // +=
+    TK_SUB_ASIGN, // -=
+    TK_MUL_ASIGN, // *=
+    TK_DIV_ASIGN  // /=
 };
 
 typedef struct {
