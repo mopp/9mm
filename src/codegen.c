@@ -1,6 +1,4 @@
 #include "9mm.h"
-#include <stdbool.h>
-#include <stdio.h>
 
 static char const* const regs64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static char const* const regs32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};

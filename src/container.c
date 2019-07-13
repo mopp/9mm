@@ -1,9 +1,4 @@
-#include "container.h"
 #include "9mm.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 Vector* new_vector()
 {

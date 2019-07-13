@@ -1,10 +1,4 @@
-#define _XOPEN_SOURCE 700
-
 #include "9mm.h"
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
 static char const* read_file(char const*);
 static char const* load_headers(char const*, char const*);

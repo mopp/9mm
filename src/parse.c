@@ -1,8 +1,4 @@
 #include "9mm.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 static Node* global(void);
 static Node* function(Type*);

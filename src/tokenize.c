@@ -1,10 +1,4 @@
-#define _XOPEN_SOURCE 700
-
 #include "9mm.h"
-#include "container.h"
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
 
 static int is_eq(char const*, char const*);
 static Token* new_token(int, char const*);

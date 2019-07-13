@@ -1,11 +1,18 @@
 #ifndef H_9MM
 #define H_9MM
 
+#define _XOPEN_SOURCE 700
 
 #include "container.h"
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 enum {
     // 抽象構文木の型を表す値
