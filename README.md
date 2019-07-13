@@ -10,7 +10,8 @@ program    = global
 global     = (decl_var ";")* |
              function* |
              struct* |
-             enum*
+             enum* |
+             "typedef" struct ident ident ";"
 struct     = "struct" ident "{" decl_var; "}" ";"
 enum       = "enum" "{" (ident (= num)? ",")+ ident (= num)? "}" ";"
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block

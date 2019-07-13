@@ -78,6 +78,31 @@ static Node* global()
     } else if (tokens[pos]->ty == TK_ENUM) {
         enm();
         return global();
+    } else if (consume(TK_TYPEDEF)) {
+        if (!consume(TK_STRUCT)) {
+            error_at(tokens[pos]->input, "typedef for struct is only supported");
+        }
+
+        if (!consume(TK_IDENT)) {
+            error_at(tokens[pos]->input, "not identifier");
+        }
+
+        UserType* user_type = map_get(user_types, tokens[pos - 1]->name);
+        if (user_type == NULL) {
+            error_at(tokens[pos]->input, "undeclared type");
+        }
+
+        if (!consume(TK_IDENT)) {
+            error_at(tokens[pos]->input, "not identifier");
+        }
+
+        map_put(user_types, tokens[pos - 1]->name, user_type);
+
+        if (!consume(';')) {
+            error_at(tokens[pos]->input, "';' is missing");
+        }
+
+        return global();
     }
 
     Type* type = parse_type();
@@ -574,10 +599,14 @@ static Node* term(void)
 
         return node;
     } else if (tokens[pos]->ty == TK_IDENT || tokens[pos]->ty == TK_STRUCT) {
+        // FIXME: Re-design type declaration.
+        size_t prev_pos = pos;
         Type* type = parse_type();
-        if (type != NULL) {
+        if (type != NULL && tokens[pos]->ty == TK_IDENT) {
+            // Next token has to be identifier to declare variable.
             return decl_var(type);
         } else {
+            pos = prev_pos;
             return ref_var();
         }
     } else if (tokens[pos]->ty == TK_STR) {
@@ -773,6 +802,7 @@ static Node* ref_var(void)
 static Type* parse_type(void)
 {
     Token** tokens = (Token**)(token_vector->data);
+    size_t prev_pos = pos;
 
     // Ignore static.
     if (tokens[pos]->ty == TK_IDENT && strcmp(tokens[pos]->name, "static") == 0) {
@@ -780,23 +810,10 @@ static Type* parse_type(void)
         ++pos;
     }
 
+    consume(TK_STRUCT);
+
     Type* type = NULL;
-    if (consume(TK_STRUCT)) {
-        // Declare struct type.
-        if (!consume(TK_IDENT)) {
-            error_at(tokens[pos]->input, "variable name has to be identifier");
-        }
-
-        char const* name = tokens[pos - 1]->name;
-        error_if_null(name);
-
-        UserType* user_type = map_get(user_types, name);
-        if (user_type == NULL) {
-            error_at(tokens[pos - 1]->input, "undeclared type");
-        }
-
-        type = new_user_type(user_type);
-    } else if (consume(TK_IDENT)) {
+    if (consume(TK_IDENT)) {
         // Declare primitive type.
         char const* name = tokens[pos - 1]->name;
         error_if_null(name);
@@ -807,11 +824,16 @@ static Type* parse_type(void)
             type = new_type(INT, NULL);
         } else if (strcmp(name, "void") == 0) {
             type = new_type(VOID, NULL);
+        } else {
+            UserType* user_type = map_get(user_types, name);
+            if (user_type != NULL) {
+                type = new_user_type(user_type);
+            }
         }
     }
 
     if (type == NULL) {
-        --pos;
+        pos = prev_pos;
         return NULL;
     }
 
