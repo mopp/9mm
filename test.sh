@@ -165,3 +165,4 @@ try 6 'struct hoge { int x; int y; }; int main() { struct hoge obj; struct hoge*
 try 6 'struct hoge { int x; int y; }; int main() { struct hoge obj; struct hoge* ptr; ptr = &obj; obj.x = 5; ++ptr->x; return obj.x; }'
 try 5 'struct abc { int* x; }; int main() { struct abc obj; int z = 1; obj.x = &z; obj.x[0] = 5; return z;}'
 try 5 'struct abc { int* x; }; int main() { struct abc obj; int z = 1; struct abc* p = &obj.x; obj.x = &z; obj.x[0] = 5; return p->x[0];}'
+try 5 'struct abc { int* x; }; int main() { struct abc obj; int y = 5; int z = 0; obj.x = &y; return obj.x[z--];}'

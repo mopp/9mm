@@ -793,6 +793,10 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             error_if_null(rhs->rtype);
             node->rtype = (lhs->rtype->size < rhs->rtype->size) ? rhs->rtype : lhs->rtype;
             break;
+        case ND_INCL_POST:
+        case ND_DECL_POST:
+            node->rtype = rhs->rtype;
+            break;
         case ND_LVAR:
         case ND_LVAR_NEW:
         case ND_DOT_REF:
