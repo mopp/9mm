@@ -19,8 +19,8 @@ stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
              block |
              "return" expr? ";"
              expr ";"
-expr       = assign
-assign     = and (("=" | "+=" | "-=" | "*=" | "/=") assign)?
+expr       = ("(" type ")")? assign
+assign     = and (("=" | "+=" | "-=" | "*=" | "/=") expr)?
 and        = equality (("&&" | "||") and)?
 equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*

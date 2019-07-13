@@ -304,7 +304,26 @@ static Node* stmt(void)
 
 static Node* expr(void)
 {
-    return assign();
+    Token** tokens = (Token**)token_vector->data;
+    size_t prev_pos = pos;
+
+    Type* type = NULL;
+    if (consume('(')) {
+        type = parse_type();
+        if (type != NULL) {
+            if (!consume(')')) {
+                error_at(tokens[pos]->input, "')' is missing");
+            }
+        } else {
+            pos = prev_pos;
+        }
+    }
+
+    Node* node = assign();
+    if (type != NULL) {
+        node->rtype = type;
+    }
+    return node;
 }
 
 static Node* assign(void)
@@ -318,22 +337,22 @@ static Node* assign(void)
             node_lvar->name = node->name;
             node_lvar->rtype = node->rtype;
 
-            node = new_node(ND_INIT, node, new_node('=', node_lvar, assign()));
+            node = new_node(ND_INIT, node, new_node('=', node_lvar, expr()));
         } else {
-            node = new_node('=', node, assign());
+            node = new_node('=', node, expr());
         }
     } else if (consume(TK_ADD_ASIGN)) {
         // x += 1;
-        node = new_node('=', node, new_node('+', node, assign()));
+        node = new_node('=', node, new_node('+', node, expr()));
     } else if (consume(TK_SUB_ASIGN)) {
         // x -= 1;
-        node = new_node('=', node, new_node('-', node, assign()));
+        node = new_node('=', node, new_node('-', node, expr()));
     } else if (consume(TK_MUL_ASIGN)) {
         // x *= 1;
-        node = new_node('=', node, new_node('*', node, assign()));
+        node = new_node('=', node, new_node('*', node, expr()));
     } else if (consume(TK_DIV_ASIGN)) {
         // x /= 1;
-        node = new_node('=', node, new_node('/', node, assign()));
+        node = new_node('=', node, new_node('/', node, expr()));
     }
 
     return node;

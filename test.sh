@@ -175,3 +175,7 @@ try 1   'struct abc { int x; }; int main() { struct abc abc; abc.x = 0; abc.x+=1
 try 2   'struct abc { int x; }; int main() { struct abc abc; abc.x = 3; abc.x-=1; return abc.x;}'
 try 3   'struct abc { int x; }; int main() { struct abc abc; abc.x = 3; abc.x*=1; return abc.x;}'
 try 3   'struct abc { int x; }; int main() { struct abc abc; abc.x = 3; abc.x/=1; return abc.x;}'
+try 2   'int main() { int x=6; x/=3; return (char)x;}'
+try 2   'int main() { int x=6; x/=3; return (int)x;}'
+try 2   'int main() { int x=6; x/=3; return (void*)x;}'
+try 5   'struct abc { int* x; }; int main() { struct abc obj; char y = 5; obj.x = (int*)&y; return y;}'
