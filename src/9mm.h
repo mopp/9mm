@@ -69,71 +69,79 @@ enum {
     TK_TYPEDEF    // typedef
 };
 
-typedef struct {
+struct token {
     int ty; // トークンの型
     union {
         int val;          // tyがTK_NUMの場合、その数値
         char const* name; // tyがTK_IDENTの場合、その名前
     };
     char const* input; // トークン文字列（エラーメッセージ用）
-} Token;
+};
+typedef struct token Token;
 
-typedef struct {
+struct context {
     size_t count_vars;
     size_t current_offset;   // The offset of the current "rbp" register.
     Map* var_offset_map;     // variable name -> offset.
     Map* var_type_map;       // variable name -> "Type".
     char const* break_label; // Label for break in current loop
-} Context;
+};
+typedef struct context Context;
 
-typedef struct {
+struct node_function {
     char const* name;
     Vector* args;
     Context* context;
-} NodeFunction;
+};
+typedef struct node_function NodeFunction;
 
-typedef struct {
-    struct Node* condition;
-    struct Node* body;
-    struct Node* else_body; // NULLはelse節が無いことを意味する
-} NodeIfElse;
+struct node_if_else {
+    struct node* condition;
+    struct node* body;
+    struct node* else_body; // NULLはelse節が無いことを意味する
+};
+typedef struct node_if_else NodeIfElse;
 
-typedef struct {
-    struct Node* initializing;
-    struct Node* condition;
-    struct Node* updating;
-    struct Node* body;
+struct node_for {
+    struct node* initializing;
+    struct node* condition;
+    struct node* updating;
+    struct node* body;
     char const* break_label;
-} NodeFor;
+};
+typedef struct node_for NodeFor;
 
-typedef struct {
+struct node_call {
     char const* name;
     Vector* arguments;
-} NodeCall;
+};
+typedef struct node_call NodeCall;
 
-typedef struct {
+struct user_type {
     char const* name;
     size_t size;
     Map* member_offset_map; // name -> its offset
     Map* member_type_map;   // name -> its type
-} UserType;
+};
+typedef struct user_type UserType;
 
-typedef struct Type {
+struct type {
     enum { CHAR,
            INT,
            PTR,
            ARRAY,
            USER,
            VOID } ty;
-    struct Type const* ptr_to;
+    struct type const* ptr_to;
     size_t size;
     UserType* user_type; // Valid if ty is USER
-} Type;
+};
+typedef struct type Type;
 
-typedef struct Node {
+struct node {
     int ty;            // Type of "Node"
-    struct Node* lhs;  // Left-hand-side
-    struct Node* rhs;  // Right-hand-size
+    struct node* lhs;  // Left-hand-side
+    struct node* rhs;  // Right-hand-size
     Type const* rtype; // Type of result of "expr" of "Node".
     union {
         int val;              // for "ND_NUM"
@@ -148,7 +156,8 @@ typedef struct Node {
         char const* break_label;
         void* tv;
     };
-} Node;
+};
+typedef struct node Node;
 
 // main.c
 _Noreturn void error_at(char const*, char const*);
