@@ -673,33 +673,40 @@ static Type* parse_type(void)
         ++pos;
     }
 
-    if (tokens[pos]->ty == TK_STRUCT) {
-        ++pos;
-    } else if (tokens[pos]->ty != TK_IDENT) {
-        return NULL;
-    }
-
-    error_if_null(tokens[pos]->name);
-
-    char const* name = tokens[pos]->name;
     Type* type = NULL;
-    if (strcmp(name, "char") == 0) {
-        type = new_type(CHAR, NULL);
-    } else if (strcmp(name, "int") == 0) {
-        type = new_type(INT, NULL);
-    } else if (strcmp(name, "void") == 0) {
-        type = new_type(VOID, NULL);
-    } else {
+    if (consume(TK_STRUCT)) {
+        // Declare struct type.
+        if (!consume(TK_IDENT)) {
+            error_at(tokens[pos]->input, "variable name has to be identifier");
+        }
+
+        char const* name = tokens[pos - 1]->name;
+        error_if_null(name);
+
         UserType* user_type = map_get(user_types, name);
-        if (user_type != NULL) {
-            type = new_user_type(user_type);
+        if (user_type == NULL) {
+            error_at(tokens[pos - 1]->input, "undeclared type");
+        }
+
+        type = new_user_type(user_type);
+    } else if (consume(TK_IDENT)) {
+        // Declare primitive type.
+        char const* name = tokens[pos - 1]->name;
+        error_if_null(name);
+
+        if (strcmp(name, "char") == 0) {
+            type = new_type(CHAR, NULL);
+        } else if (strcmp(name, "int") == 0) {
+            type = new_type(INT, NULL);
+        } else if (strcmp(name, "void") == 0) {
+            type = new_type(VOID, NULL);
         }
     }
 
     if (type == NULL) {
+        --pos;
         return NULL;
     }
-    ++pos;
 
     while (1) {
         // Ignore const.
