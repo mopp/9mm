@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+
 #include "9mm.h"
 #include <errno.h>
 #include <stdarg.h>
@@ -5,6 +7,7 @@
 #include <string.h>
 
 static char const* read_file(char const*);
+static char const* load_headers(char const*, char const*);
 static char const* input;
 static char const* filename;
 
@@ -30,6 +33,9 @@ int main(int argc, char const* const* argv)
         // The given file contains source code.
         filename = argv[1];
         input = read_file(filename);
+        char const* dir = strndup(argv[1], strchr(argv[1], '/') - argv[1]);
+        input = load_headers(dir, input);
+        free((void*)dir);
     }
 
     Vector const* tokens = tokenize(input);
@@ -114,4 +120,53 @@ static char const* read_file(char const* path)
     fclose(fp);
 
     return buf;
+}
+
+static char const* load_headers(char const* dir, char const* p)
+{
+    char const* code_head = p;
+
+    while (*p) {
+        if (strncmp("//", p, 2) == 0) {
+            // Skip line comment.
+            p = strchr(p, '\n') + 1;
+        } else if (strncmp("#include", p, 8) == 0) {
+            // Extract target filename.
+            char const* filename_head = p + 10;
+            char const* filename_tail = strchr(filename_head, '"');
+            size_t filename_size = filename_tail - filename_head;
+
+            // Concat directory and filename.
+            char* filepath = malloc(sizeof(char) * (strlen(dir) + filename_size + 1 + 1));
+            *filepath = 0;
+            strncat(filepath, dir, strlen(dir));
+            strncat(filepath, "/", 2);
+            strncat(filepath, filename_head, filename_size);
+
+            char const* content = read_file(filepath);
+            free(filepath);
+
+            // Allocate space to store them enough.
+            char* prog = malloc(sizeof(char) * (strlen(code_head) + strlen(content)));
+            *prog = 0;
+
+            // Load lines before current header.
+            strncat(prog, code_head, p - code_head);
+            // Load the header file.
+            strncat(prog, content, strlen(content));
+            // Load lines after the header.
+            ++filename_tail;
+            strncat(prog, filename_tail, strlen(filename_tail));
+
+            free((void*)content);
+            free((void*)code_head);
+
+            code_head = prog;
+            p = code_head;
+        } else {
+            ++p;
+        }
+    }
+
+    return code_head;
 }

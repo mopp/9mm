@@ -18,8 +18,11 @@ Vector const* tokenize(char const* p)
     while (*p) {
         p = skip(p);
 
+
         Token* token = NULL;
-        if (is_eq(p, "break")) {
+        if (*p == '\0') {
+            break;
+        } else if (is_eq(p, "break")) {
             token = new_token(TK_BREAK, p);
             p += 5;
         } else if (is_eq(p, "+=")) {
