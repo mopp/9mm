@@ -196,3 +196,6 @@ try 3   'struct hoge { int x; int y; }; typedef struct hoge Hoge; int main() { H
 try 5   'struct hoge { int x; }; typedef struct hoge Hoge; struct piyo { int y; Hoge* h; }; int main() { Hoge hoge; struct piyo a; a.h = &hoge; a.h->x = 5; return hoge.x; }'
 try 0   'int main() { size_t i = 0; return i;}'
 try 0   'void main(void) { size_t i = 0; return i;}'
+try 65  "int main(void) { return 'A';}"
+try 0   "int main(void) { return '\0';}"
+try 48  "int main(void) { return '0';}"

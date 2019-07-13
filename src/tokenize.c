@@ -108,6 +108,22 @@ Vector const* tokenize(char const* p)
         } else if (isdigit(*p)) {
             token = new_token(TK_NUM, p);
             token->val = strtol(p, (char**)&p, 10);
+        } else if (*p == 39) {
+            // 39 == '\''
+            token = new_token(TK_NUM, p);
+            ++p;
+            if (*p == 92) {
+                // 92 == '\'
+                ++p;
+                if (*p == 'n') {
+                    token->val = 10;
+                } else if (*p == '0') {
+                    token->val = 0;
+                }
+            } else {
+                token->val = *p;
+            }
+            p += 2;
         } else {
             // Find the variable name.
             char const* name = p;
