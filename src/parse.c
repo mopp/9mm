@@ -148,6 +148,9 @@ static void strut(void)
     user_type->member_offset_map = new_map();
     user_type->member_type_map = new_map();
 
+    // Put it here for self pointer struct.
+    map_put(user_types, user_type->name, user_type);
+
     if (!consume('{')) {
         error_at(tokens[pos]->input, "You need { here");
     }
@@ -181,8 +184,6 @@ static void strut(void)
     if (user_type->member_offset_map->keys->len == 0) {
         error_at(tokens[pos]->input, "struct must have a field at least");
     }
-
-    map_put(user_types, user_type->name, user_type);
 }
 
 static Node* block(void)
