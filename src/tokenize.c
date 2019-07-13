@@ -8,282 +8,164 @@
 
 #define is_eq(str, c_str) (strncmp((str), (c_str), sizeof((c_str)) - 1) == 0)
 
+static Token* new_token(int, char const*);
+static char const* skip(char const*);
 static int is_alnum(char);
-
 
 Vector const* tokenize(char const* p)
 {
     Vector* tokens = new_vector();
 
     while (*p) {
-        // 空白文字をスキップ
-        if (isspace(*p)) {
-            p++;
-            continue;
-        }
+        p = skip(p);
 
-        // Skip line comment.
-        if (strncmp(p, "//", 2) == 0) {
-            p += 2;
-            while (*p != '\n') {
-                p++;
-            }
-            continue;
-        }
-
-        // Skip block comment.
-        if (strncmp(p, "/*", 2) == 0) {
-            char* q = strstr(p + 2, "*/");
-            if (!q) {
-                error_at(p, "The comment is NOT closed.");
-            }
-            p = q + 2;
-            continue;
-        }
-
-        Token* token = malloc(sizeof(Token));
-
+        Token* token = NULL;
         if (is_eq(p, "break")) {
-            token->ty = TK_BREAK;
-            token->input = p;
-            vec_push(tokens, token);
+            token = new_token(TK_BREAK, p);
             p += 5;
-            continue;
-        }
-
-        if (is_eq(p, "+=")) {
-            token->ty = TK_ADD_ASIGN;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "+=")) {
+            token = new_token(TK_ADD_ASIGN, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "-=")) {
-            token->ty = TK_SUB_ASIGN;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "-=")) {
+            token = new_token(TK_SUB_ASIGN, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "*=")) {
-            token->ty = TK_MUL_ASIGN;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "*=")) {
+            token = new_token(TK_MUL_ASIGN, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "/=")) {
-            token->ty = TK_DIV_ASIGN;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "/=")) {
+            token = new_token(TK_DIV_ASIGN, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "->")) {
-            token->ty = TK_ARROW;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "->")) {
+            token = new_token(TK_ARROW, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "struct")) {
-            token->ty = TK_STRUCT;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "struct")) {
+            token = new_token(TK_STRUCT, p);
             p += 6;
-            continue;
-        }
-
-        if (is_eq(p, "||")) {
-            token->ty = TK_OR;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "||")) {
+            token = new_token(TK_OR, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "&&")) {
-            token->ty = TK_AND;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "&&")) {
+            token = new_token(TK_AND, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "++")) {
-            token->ty = TK_INCL;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "++")) {
+            token = new_token(TK_INCL, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "--")) {
-            token->ty = TK_DECL;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "--")) {
+            token = new_token(TK_DECL, p);
             p += 2;
-            continue;
-        }
-
-        if (*p == '"') {
+        } else if (*p == '"') {
             // Read string literal.
             char const* str_begin = p++;
             while (*p != '"') {
                 ++p;
             }
-            token->ty = TK_STR;
-            token->input = str_begin;
+            token = new_token(TK_STR, str_begin);
             token->name = strndup(str_begin, p - str_begin + 1);
-            vec_push(tokens, token);
             ++p;
-            continue;
-        }
-
-        if (is_eq(p, "sizeof")) {
-            token->ty = TK_SIZEOF;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "sizeof")) {
+            token = new_token(TK_SIZEOF, p);
             p += 6;
-            continue;
-        }
-
-        // NOTE: "return "との比較では対応出来ないケースがあるか考える.
-        if (is_eq(p, "return") && !is_alnum(p[6])) {
-            token->ty = TK_RETURN;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "return") && !is_alnum(p[6])) {
+            token = new_token(TK_RETURN, p);
             p += 6;
-            continue;
-        }
-
-        if (is_eq(p, "if") && !is_alnum(p[2])) {
-            token->ty = TK_IF;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "if") && !is_alnum(p[2])) {
+            token = new_token(TK_IF, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "else") && !is_alnum(p[4])) {
-            token->ty = TK_ELSE;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "else") && !is_alnum(p[4])) {
+            token = new_token(TK_ELSE, p);
             p += 4;
-            continue;
-        }
-
-        if (is_eq(p, "while") && !is_alnum(p[5])) {
-            token->ty = TK_WHILE;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "while") && !is_alnum(p[5])) {
+            token = new_token(TK_WHILE, p);
             p += 5;
-            continue;
-        }
-
-        if (is_eq(p, "for") && !is_alnum(p[3])) {
-            token->ty = TK_FOR;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "for") && !is_alnum(p[3])) {
+            token = new_token(TK_FOR, p);
             p += 3;
-            continue;
-        }
-
-        if (is_eq(p, "==")) {
-            token->ty = TK_EQ;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "==")) {
+            token = new_token(TK_EQ, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "!=")) {
-            token->ty = TK_NE;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "!=")) {
+            token = new_token(TK_NE, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, "<=")) {
-            token->ty = TK_LE;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, "<=")) {
+            token = new_token(TK_LE, p);
             p += 2;
-            continue;
-        }
-
-        if (is_eq(p, ">=")) {
-            token->ty = TK_GE;
-            token->input = p;
-            vec_push(tokens, token);
+        } else if (is_eq(p, ">=")) {
+            token = new_token(TK_GE, p);
             p += 2;
-            continue;
-        }
-
-        if (*p == '+' ||
-            *p == '-' ||
-            *p == '*' ||
-            *p == '/' ||
-            *p == '(' ||
-            *p == ')' ||
-            *p == '<' ||
-            *p == '>' ||
-            *p == ';' ||
-            *p == '=' ||
-            *p == '{' ||
-            *p == '}' ||
-            *p == ',' ||
-            *p == '&' ||
-            *p == '[' ||
-            *p == ']' ||
-            *p == '.') {
-            token->ty = *p;
-            token->input = p;
-            vec_push(tokens, token);
-            p++;
-            continue;
-        }
-
-        if (isdigit(*p)) {
-            token->ty = TK_NUM;
-            token->input = p;
-            token->val = strtol(p, (char**)&p, 10);
-            vec_push(tokens, token);
-            continue;
-        }
-
-        // find the variable name.
-        char const* name = p;
-        while (is_alnum(*p)) {
+        } else if (*p == '+' || *p == '-' ||
+                   *p == '*' || *p == '/' ||
+                   *p == '(' || *p == ')' ||
+                   *p == '<' || *p == '>' ||
+                   *p == ';' || *p == '=' ||
+                   *p == '{' || *p == '}' ||
+                   *p == ',' || *p == '&' ||
+                   *p == '[' || *p == ']' ||
+                   *p == '.') {
+            token = new_token(*p, p);
             ++p;
+        } else if (isdigit(*p)) {
+            token = new_token(TK_NUM, p);
+            token->val = strtol(p, (char**)&p, 10);
+        } else {
+            // Find the variable name.
+            char const* name = p;
+            while (is_alnum(*p)) {
+                ++p;
+            }
+
+            if (name != p) {
+                size_t n = p - name;
+                token = new_token(TK_IDENT, name);
+                token->name = strndup(name, n);
+            }
         }
 
-        if (name != p) {
-            size_t n = p - name;
-            token->ty = TK_IDENT;
-            token->name = strndup(name, n);
-            token->input = name;
-            vec_push(tokens, token);
-            continue;
+        if (token == NULL) {
+            error_at(p, "トークナイズできません");
         }
 
-        free(token);
-
-        error_at(p, "トークナイズできません");
+        vec_push(tokens, token);
     }
 
-    Token* token = malloc(sizeof(Token));
-    token->ty = TK_EOF;
-    token->input = p;
-    vec_push(tokens, token);
+    vec_push(tokens, new_token(TK_EOF, p));
 
     return tokens;
+}
+
+static Token* new_token(int ty, char const* p)
+{
+    Token* token = malloc(sizeof(Token));
+    token->ty = ty;
+    token->input = p;
+
+    return token;
+}
+
+static char const* skip(char const* p)
+{
+    while (*p) {
+        if (isspace(*p)) {
+            // Skip space.
+            ++p;
+        } else if (strncmp(p, "//", 2) == 0) {
+            // Skip line comment.
+            p += 2;
+            while (*p != '\n') {
+                ++p;
+            }
+        } else if (strncmp(p, "/*", 2) == 0) {
+            // Skip block comment.
+            char* q = strstr(p + 2, "*/");
+            if (!q) {
+                error_at(p, "The comment is NOT closed.");
+            }
+            p = q + 2;
+        } else {
+            break;
+        }
+    }
+
+    return p;
 }
 
 static int is_alnum(char c)
