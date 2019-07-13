@@ -17,7 +17,7 @@ static Node* term(void);
 static Node* decl_var(Type*);
 static Node* ref_var(void);
 static Type* parse_type(void);
-static bool consume(int);
+static int consume(int);
 static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int, Type const*);
@@ -783,15 +783,15 @@ static Type* parse_type(void)
     return type;
 }
 
-// Return true if the type of a token at the current potions is same to the given type.
-// otherwise Return false.
-static bool consume(int ty)
+// Return 1 if the type of a token at the current potions is same to the given type.
+// otherwise Return 0.
+static int consume(int ty)
 {
     Token** tokens = (Token**)(token_vector->data);
     if (tokens[pos]->ty != ty)
-        return false;
+        return 0;
     pos++;
-    return true;
+    return 1;
 }
 
 static Node* new_node(int ty, Node* lhs, Node* rhs)
