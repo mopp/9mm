@@ -5,7 +5,7 @@ try() {
     input="$2"
 
     echo "./9mm '$input'"
-    ./9mm -str "$input" >tmp.s
+    ./9mm --str "$input" >tmp.s
     if [[ "$?" != "0" ]]; then
         echo 'Compilation error'
         exit 1

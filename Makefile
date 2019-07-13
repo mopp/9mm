@@ -8,7 +8,7 @@ OBJS   = $(SRCS:.c=.o)
 $(OBJS): src/9mm.h
 
 test: 9mm
-	./9mm -test
+	./9mm --test
 	./test.sh
 
 clean:

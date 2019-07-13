@@ -11,16 +11,20 @@ static char const* filename;
 int main(int argc, char const* const* argv)
 {
     if (argc < 2) {
-        error("引数の個数が正しくありません");
+        puts("9mm [--test] [--str 'your program'] [FILEPATH]");
         return 1;
     }
 
-    if (strncmp("-test", argv[1], 5) == 0) {
+    if (strncmp("--test", argv[1], 5) == 0) {
         runtest();
         return 0;
-    } else if (strncmp("-str", argv[1], 4) == 0) {
+    }
+
+    if (strncmp("--str", argv[1], 4) == 0) {
+        // The given string is source code.
         input = argv[2];
     } else {
+        // The given file contains source code.
         filename = argv[1];
         input = read_file(filename);
     }
