@@ -11,7 +11,10 @@ static char const* filename;
 int main(int argc, char const* const* argv)
 {
     if (argc < 2) {
-        puts("9mm [--test] [--str 'your program'] [FILEPATH]");
+        printf("Usage:\n");
+        printf("  %s [--test] [--str 'your program'] [FILEPATH]\n\n", argv[0]);
+        printf("  --test run test\n");
+        printf("  --str  input c codes as a string\n");
         return 1;
     }
 
