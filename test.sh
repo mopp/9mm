@@ -183,3 +183,4 @@ try 5   'struct hoge { int x; }; struct piyo { int y; struct hoge h; }; int main
 try 5   'struct hoge { int x; }; struct piyo { int y; struct hoge* h; }; int main() { struct hoge hoge; struct piyo a; a.h = &hoge; a.h->x = 5; return hoge.x; }'
 try 1   'int main() { while (1) { break; return 10; } return 1; }'
 try 10  'int main() { int i=0; while (1) { if (i==10) break; ++i; } return i; }'
+try 9   'int main() { int i; for (i = 0; i<10; i=i+1) { if (i == 9) {break;}} return i; }'

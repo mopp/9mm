@@ -95,6 +95,7 @@ typedef struct {
     struct Node* condition;
     struct Node* updating;
     struct Node* body;
+    char const* break_label;
 } NodeFor;
 
 typedef struct {

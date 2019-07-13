@@ -287,7 +287,16 @@ static Node* stmt(void)
             }
         }
 
+        char* break_label = malloc(sizeof(char) * 128);
+        sprintf(break_label, ".L_for_end_%p", node);
+
+        char const* prev = context->break_label;
+        context->break_label = break_label;
+
         node->fors->body = stmt();
+        node->fors->break_label = break_label;
+
+        context->break_label = prev;
     } else if (tokens[pos]->ty == '{') {
         node = block();
     } else {

@@ -209,7 +209,7 @@ void gen(Node const* node)
             gen(node->fors->condition);
             printf("  pop rax\n");
             printf("  cmp rax, 0\n");
-            printf("  je .L_for_end_%p\n", node->fors);
+            printf("  je %s\n", node->fors->break_label);
         }
 
         gen(node->fors->body);
@@ -219,7 +219,7 @@ void gen(Node const* node)
 
         printf("  jmp .L_for_begin_%p\n", node->fors);
 
-        printf("  .L_for_end_%p:\n", node->fors);
+        printf("  %s:\n", node->fors->break_label);
 
         return;
     }
