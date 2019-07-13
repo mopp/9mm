@@ -31,41 +31,7 @@ int main(int argc, char const* const* argv)
 
     Vector const* tokens = tokenize(input);
     Node const* const* code = program(tokens);
-
-    puts(".intel_syntax noprefix");
-    puts(".global main\n");
-
-    Vector const* keys = str_label_map->keys;
-    if (keys->len != 0) {
-        // Define string literals.
-        puts(".data");
-        puts(".align 8");
-        for (size_t i = keys->len; 0 < i; i--) {
-            char const* str = str_label_map->keys->data[i - 1];
-            char const* label = str_label_map->vals->data[i - 1];
-            printf("%s:\n", label);
-            printf("  .string %s\n", str);
-        }
-        putchar('\n');
-    }
-
-    // Allocate the global variable spaces.
-    puts("# Global variables");
-    puts(".bss");
-    puts(".align 32");
-    for (size_t i = 0; code[i]; i++) {
-        if (code[i]->ty == ND_GVAR_NEW) {
-            printf("%s:\n", code[i]->name);
-            printf("  .zero %zd\n", code[i]->rtype->size);
-        }
-    }
-    putchar('\n');
-    puts(".text");
-
-    // 先頭の関数から順にコード生成
-    for (int i = 0; code[i]; i++) {
-        gen(code[i]);
-    }
+    generate(code);
 
     return 0;
 }

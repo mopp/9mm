@@ -174,7 +174,7 @@ extern Map* str_label_map;
 extern Map* user_types;
 
 // codegen.c
-void gen(Node const*);
+void generate(Node const* const*);
 
 void runtest();
 
