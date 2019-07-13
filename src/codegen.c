@@ -50,6 +50,16 @@ void generate(Node const* const* code)
 
 static void gen(Node const* node)
 {
+    if (node->ty == '!') {
+        gen(node->lhs);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  sete al\n");
+        printf("  push rax\n");
+
+        return;
+    }
+
     if (node->ty == ND_AND) {
         gen(node->lhs);
         printf("  pop rax\n");

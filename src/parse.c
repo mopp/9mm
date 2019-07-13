@@ -494,7 +494,10 @@ static Node* unary(void)
         } else {
             return new_node(ND_REF, node, NULL);
         }
+    } else if (consume('!')) {
+        return new_node('!', term(), NULL);
     }
+
     return term();
 }
 

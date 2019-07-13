@@ -28,7 +28,7 @@ relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
 unary      = "sizeof" "(" unary | "struct" ident )" |
-             ("+" | "-" | "&" | "*")? term
+             ("+" | "-" | "&" | "*" | "!")? term
 term       = num |
              ident "(" (expr ("," expr)*)* ")" |
              ("++" | "--")* ref_var |

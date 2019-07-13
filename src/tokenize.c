@@ -99,7 +99,7 @@ Vector const* tokenize(char const* p)
                    *p == '{' || *p == '}' ||
                    *p == ',' || *p == '&' ||
                    *p == '[' || *p == ']' ||
-                   *p == '.') {
+                   *p == '.' || *p == '!') {
             token = new_token(*p, p);
             ++p;
         } else if (isdigit(*p)) {
