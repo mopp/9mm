@@ -8,9 +8,11 @@ based on [低レイヤを知りたい人のためのCコンパイラ作成入門
 ```txt
 program    = global
 global     = (decl_var ";")* |
-             function*
-             struct*
+             function* |
+             struct* |
+             enum*
 struct     = "struct" ident "{" decl_var; "}" ";"
+enum       = "enum" "{" (ident (= num)? ",")+ ident (= num)? "}" ";"
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
 block      = "{" stmt* "}"
 stmt       = "if" "(" expr ")" stmt ("else" stmt)? |

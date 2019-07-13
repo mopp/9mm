@@ -64,7 +64,8 @@ enum {
     TK_SUB_ASIGN, // -=
     TK_MUL_ASIGN, // *=
     TK_DIV_ASIGN, // /=
-    TK_BREAK      // break
+    TK_BREAK,     // break
+    TK_ENUM       // enum
 };
 
 typedef struct {

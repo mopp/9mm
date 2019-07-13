@@ -189,3 +189,6 @@ try 5   'struct hoge { struct hoge* x; int y; }; int main() { struct hoge a; str
 try 0   'int main() {return !1;}'
 try 1   'int main() {return !0;}'
 try 0   'int main() {return !32;}'
+try 0   'enum {HOGE, FUGA=5, PIYO}; int main() {return HOGE;}'
+try 5   'enum {HOGE, FUGA=5, PIYO}; int main() {return FUGA;}'
+try 6   'enum {HOGE, FUGA=5, PIYO}; int main() {return PIYO;}'

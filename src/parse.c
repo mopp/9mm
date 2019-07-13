@@ -3,6 +3,7 @@
 static Node* global(void);
 static Node* function(Type*);
 static void strut(void);
+static void enm(void);
 static Node* block(void);
 static Node* stmt(void);
 static Node* expr(void);
@@ -44,6 +45,9 @@ Map* str_label_map = NULL;
 // Name to user defined type map.
 Map* user_types = NULL;
 
+// Enum member to number.
+static Map* enum_map = NULL;
+
 Node const* const* program(Vector const* tv)
 {
     token_vector = tv;
@@ -53,6 +57,7 @@ Node const* const* program(Vector const* tv)
     gvar_type_map = new_map();
     str_label_map = new_map();
     user_types = new_map();
+    enum_map = new_map();
 
     size_t i = 0;
     Node const** code = malloc(sizeof(Node*) * 64);
@@ -69,6 +74,9 @@ static Node* global()
     Token** tokens = (Token**)(token_vector->data);
     if (tokens[pos]->ty == TK_STRUCT && tokens[pos + 1]->ty == TK_IDENT && tokens[pos + 2]->ty == '{') {
         strut();
+        return global();
+    } else if (tokens[pos]->ty == TK_ENUM) {
+        enm();
         return global();
     }
 
@@ -125,6 +133,43 @@ static Node* function(Type* type)
     context = prev_context;
 
     return node;
+}
+
+static void enm(void)
+{
+    if (!consume(TK_ENUM)) {
+        error("not enum");
+    }
+
+    Token** tokens = (Token**)(token_vector->data);
+    if (!consume('{')) {
+        error_at(tokens[pos]->input, "'{' is missing");
+    }
+
+    // Start from 1 to distinguish NULL in struct map.
+    size_t count = 1;
+    while (1) {
+        if (tokens[pos]->ty == TK_IDENT) {
+            char const* name = tokens[pos++]->name;
+            if (consume('=')) {
+                count = tokens[pos++]->val + 1;
+            }
+            map_put(enum_map, name, (void*)count);
+            ++count;
+
+            consume(',');
+        } else {
+            error_at(tokens[pos]->input, "enum member has to be identifier");
+        }
+
+        if (consume('}') || consume(TK_EOF)) {
+            break;
+        }
+    }
+
+    if (!consume(';')) {
+        error_at(tokens[pos]->input, "';' is missing");
+    }
 }
 
 static void strut(void)
@@ -633,7 +678,12 @@ static Node* ref_var(void)
         if (type != NULL) {
             node = new_node(ND_GVAR, NULL, NULL);
         } else {
-            error_at(tokens[pos - 1]->input, "Not declared variable is used");
+            size_t n = (size_t)map_get(enum_map, name);
+            if (n != 0) {
+                return new_node_num(n - 1);
+            } else {
+                error_at(tokens[pos - 1]->input, "Not declared variable is used");
+            }
         }
     }
 
