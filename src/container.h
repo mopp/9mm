@@ -4,16 +4,18 @@
 
 #include <stddef.h>
 
-typedef struct {
+struct vector {
     void** data;
     size_t capacity;
     size_t len;
-} Vector;
+};
+typedef struct vector Vector;
 
-typedef struct {
+struct map {
     Vector* keys;
     Vector* vals;
-} Map;
+};
+typedef struct map Map;
 
 Vector* new_vector();
 void vec_push(Vector*, void*);
