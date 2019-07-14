@@ -199,3 +199,4 @@ try 0   'void main(void) { size_t i = 0; return i;}'
 try 65  "int main(void) { return 'A';}"
 try 0   "int main(void) { return '\0';}"
 try 48  "int main(void) { return '0';}"
+try 0   "struct hoge; int main(void) { struct hoge* h; return 0;}"

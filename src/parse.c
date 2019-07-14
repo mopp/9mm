@@ -72,7 +72,7 @@ Node const* const* program(Vector const* tv)
 static Node* global()
 {
     Token** tokens = (Token**)(token_vector->data);
-    if (tokens[pos]->ty == TK_STRUCT && tokens[pos + 1]->ty == TK_IDENT && tokens[pos + 2]->ty == '{') {
+    if (tokens[pos]->ty == TK_STRUCT && tokens[pos + 1]->ty == TK_IDENT && (tokens[pos + 2]->ty == '{' || tokens[pos + 2]->ty == ';')) {
         strut();
         return global();
     } else if (tokens[pos]->ty == TK_ENUM) {
@@ -216,6 +216,11 @@ static void strut(void)
 
     // Put it here for self pointer struct.
     map_put(user_types, user_type->name, user_type);
+
+    if (consume(';')) {
+        // Opaque struct declaration.
+        return;
+    }
 
     if (!consume('{')) {
         error_at(tokens[pos]->input, "You need { here");
@@ -667,6 +672,10 @@ static Node* decl_var(Type* type)
         Node* node = new_node(ND_LVAR_NEW, NULL, NULL);
         node->name = name;
         node->rtype = type;
+
+        if (node->rtype->size == 0) {
+            error_at(tokens[pos - 1]->input, "the size of type is zero, cannot allocate the space");
+        }
 
         context->current_offset += node->rtype->size;
         ++context->count_vars;

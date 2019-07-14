@@ -12,7 +12,8 @@ global     = (decl_var ";")* |
              struct* |
              enum* |
              "typedef" struct ident ident ";"
-struct     = "struct" ident "{" decl_var; "}" ";"
+struct     = "struct" ident ";"
+             "struct" ident "{" decl_var; "}" ";"
 enum       = "enum" "{" (ident (= num)? ",")+ ident (= num)? "}" ";"
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
 block      = "{" stmt* "}"
