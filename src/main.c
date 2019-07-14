@@ -121,7 +121,7 @@ static char* read_file(char const* path)
 static char const* preprocess(char* content, char const* filepath)
 {
     char* dir_path = NULL;
-    char* p = strchr(filepath, '/');
+    char* p = strrchr(filepath, '/');
     if (p == NULL) {
         dir_path = "./";
     } else {
