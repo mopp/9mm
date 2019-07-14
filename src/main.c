@@ -215,20 +215,27 @@ static void expand_macros(char* head)
             // Remove #ifndef line.
             truncate(head, ifndef_tail + 1);
 
-            char* else_head = strstr(head, "#else");
-            char* else_tail = strchr(else_head, '\n') + 1;
-            char* endif_head = strstr(head, "#endif");
-            char* endif_tail = strchr(endif_head, '\n') + 1;
+            char* else_head = strstr(head, "#else\n");
+            char* else_tail = else_head + 5;
+            char* endif_head = strstr(head, "#endif\n");
+            char* endif_tail = endif_head + 8;
+            int has_else = else_head != NULL && else_head < endif_head;
 
             if (is_defined) {
-                // Keep the lines between #else and #endif.
-                truncate(endif_head, endif_tail);
-                if (else_head != NULL) {
+                // Keep the lines between #ifndef/#else and #endif.
+                if (has_else) {
+                    truncate(endif_head, endif_tail);
                     truncate(head, else_tail);
+                } else {
+                    truncate(head, endif_tail);
                 }
             } else {
                 // Keep the lines between #ifndef and #else.
-                truncate(else_head, endif_tail);
+                if (has_else) {
+                    truncate(else_head, endif_tail);
+                } else {
+                    truncate(head, endif_tail);
+                }
             }
         } else if (strncmp("#ifdef ", head, 7) == 0) {
             char const* ifdef_head = head + 7;
@@ -245,15 +252,22 @@ static void expand_macros(char* head)
             char* else_tail = strchr(else_head, '\n') + 1;
             char* endif_head = strstr(head, "#endif");
             char* endif_tail = strchr(endif_head, '\n') + 1;
+            int has_else = else_head != NULL && else_head < endif_head;
 
-            if (is_defined) {
-                // Keep the lines between #ifdef and #else.
-                truncate(else_head, endif_tail);
-            } else {
-                // Keep the lines between #else and #endif.
-                truncate(endif_head, endif_tail);
-                if (else_head != NULL) {
+            if (!is_defined) {
+                // Keep the lines between #ifdef/#else and #endif.
+                if (has_else) {
+                    truncate(endif_head, endif_tail);
                     truncate(head, else_tail);
+                } else {
+                    truncate(head, endif_tail);
+                }
+            } else {
+                // Keep the lines between #ifdef and #else.
+                if (has_else) {
+                    truncate(else_head, endif_tail);
+                } else {
+                    truncate(head, endif_tail);
                 }
             }
         } else {
