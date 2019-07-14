@@ -2,6 +2,7 @@
 
 static char const* read_file(char const*);
 static char const* load_headers(char const*, char const*);
+static char const* preprocess(char*);
 static char const* input;
 static char const* filename;
 
@@ -29,6 +30,7 @@ int main(int argc, char const* const* argv)
         input = read_file(filename);
         char const* dir = strndup(argv[1], strchr(argv[1], '/') - argv[1]);
         input = load_headers(dir, input);
+        input = preprocess(input);
         free((void*)dir);
     }
 
@@ -159,6 +161,92 @@ static char const* load_headers(char const* dir, char const* p)
             p = code_head;
         } else {
             ++p;
+        }
+    }
+
+    return code_head;
+}
+
+static void truncate(char* p, char const* tail)
+{
+    while (*tail) {
+        *p = *tail;
+        ++p;
+        ++tail;
+    }
+    *p = '\0';
+}
+
+// FIXME: Support nested macro and multiline macro.
+static char const* preprocess(char* head)
+{
+    char* code_head = head;
+    Map* macros = new_map();
+
+    while (*head) {
+        if (strncmp("//", head, 2) == 0) {
+            // Skip line comment.
+            head = strchr(head, '\n') + 1;
+        } else if (strncmp("#define ", head, 8) == 0) {
+            char const* define_head = head + 8;
+            char const* define_tail = strchr(define_head, '\n');
+
+            char* define_ident = strndup(define_head, define_tail - define_head);
+            map_put(macros, define_ident, define_ident);
+            free(define_ident);
+
+            // Remove the macro line.
+            truncate(head, define_tail + 1);
+        } else if (strncmp("#ifndef ", head, 8) == 0) {
+            char const* ifndef_head = head + 8;
+            char const* ifndef_tail = strchr(ifndef_head, '\n');
+
+            char* ifndef_ident = strndup(ifndef_head, ifndef_tail - ifndef_head);
+            int is_defined = map_get(macros, ifndef_ident) != NULL;
+            free(ifndef_ident);
+
+            // Remove #ifndef line.
+            truncate(head, ifndef_tail + 1);
+
+            char* else_head = strstr(head, "#else");
+            char* else_tail = strchr(else_head, '\n') + 1;
+            char* endif_head = strstr(head, "#endif");
+            char* endif_tail = strchr(endif_head, '\n') + 1;
+
+            if (is_defined) {
+                // Keep the lines between #else and #endif.
+                truncate(endif_head, endif_tail);
+                truncate(head, else_tail);
+            } else {
+                // Keep the lines between #ifndef and #else.
+                truncate(else_head, endif_tail);
+            }
+        } else if (strncmp("#ifdef ", head, 7) == 0) {
+            char const* ifdef_head = head + 7;
+            char const* ifdef_tail = strchr(ifdef_head, '\n');
+
+            char* ifdef_ident = strndup(ifdef_head, ifdef_tail - ifdef_head);
+            int is_defined = map_get(macros, ifdef_ident) != NULL;
+            free(ifdef_ident);
+
+            // Remove #ifndef line.
+            truncate(head, ifdef_tail + 1);
+
+            char* else_head = strstr(head, "#else");
+            char* else_tail = strchr(else_head, '\n') + 1;
+            char* endif_head = strstr(head, "#endif");
+            char* endif_tail = strchr(endif_head, '\n') + 1;
+
+            if (is_defined) {
+                // Keep the lines between #ifdef and #else.
+                truncate(else_head, endif_tail);
+            } else {
+                // Keep the lines between #else and #endif.
+                truncate(endif_head, endif_tail);
+                truncate(head, else_tail);
+            }
+        } else {
+            ++head;
         }
     }
 
