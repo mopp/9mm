@@ -16,6 +16,7 @@ struct     = "struct" ident ";"
              "struct" ident "{" decl_var; "}" ";"
 enum       = "enum" "{" (ident (= num)? ",")+ ident (= num)? "}" ";"
 function   = type ident "(" (decl_var ("," decl_var)*)* ")" block
+             type ident "(" (decl_var ("," decl_var)*)* ")";
 block      = "{" stmt* "}"
 stmt       = "if" "(" expr ")" stmt ("else" stmt)? |
              "while" "(" expr ")" stmt |

@@ -129,6 +129,12 @@ static void gen(Node const* node)
     }
 
     if (node->ty == ND_FUNCTION) {
+        if (node->lhs == NULL) {
+            // Skip protorype.
+            // FIXME: do not include this node in AST.
+            return;
+        }
+
         printf("%s:\n", node->function->name);
 
         context = node->function->context;

@@ -151,8 +151,15 @@ static Node* function(Type* type)
         }
     }
 
-    // Parse the function body.
-    node->lhs = block();
+    if (consume(';')) {
+        // Function prototype.
+        // FIXME: store function table.
+        node->lhs = NULL;
+    } else {
+        // Parse the function body.
+        node->lhs = block();
+    }
+
 
     // Finish the current context;
     context = prev_context;
