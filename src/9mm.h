@@ -66,7 +66,8 @@ enum {
     TK_DIV_ASIGN, // /=
     TK_BREAK,     // break
     TK_ENUM,      // enum
-    TK_TYPEDEF    // typedef
+    TK_TYPEDEF,   // typedef
+    TK_EXTERN     // extern
 };
 
 struct token {

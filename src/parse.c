@@ -103,6 +103,20 @@ static Node* global()
         }
 
         return global();
+    } else if (consume(TK_EXTERN)) {
+        Type* type = parse_type();
+        if (type == NULL) {
+            error_at(tokens[pos]->input, "undeclared type");
+        }
+        if (!consume(TK_IDENT)) {
+            error_at(tokens[pos]->input, "variable has to be identifier");
+        }
+
+        map_put(gvar_type_map, tokens[pos - 1]->name, type);
+
+        if (!consume(';')) {
+            error_at(tokens[pos]->input, "';' is missing");
+        }
     }
 
     Type* type = parse_type();

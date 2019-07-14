@@ -16,6 +16,9 @@ Vector const* tokenize(char const* p)
         Token* token = NULL;
         if (*p == '\0') {
             break;
+        } else if (is_eq(p, "extern")) {
+            token = new_token(TK_EXTERN, p);
+            p += 6;
         } else if (is_eq(p, "typedef")) {
             token = new_token(TK_TYPEDEF, p);
             p += 7;

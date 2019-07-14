@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int outer;
+
 int foo()
 {
     return 0;

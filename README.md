@@ -12,6 +12,7 @@ global     = (decl_var ";")* |
              struct* |
              enum* |
              "typedef" struct ident ident ";"
+             "expern" type ";"
 struct     = "struct" ident ";"
              "struct" ident "{" decl_var; "}" ";"
 enum       = "enum" "{" (ident (= num)? ",")+ ident (= num)? "}" ";"
