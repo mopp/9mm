@@ -147,6 +147,9 @@ static char* load_headers(char* head, char const* dir_path)
         if (strncmp("//", head, 2) == 0) {
             // Skip line comment.
             head = strchr(head, '\n') + 1;
+        } else if (strncmp("#include <", head, 10) == 0) {
+            // FIXME: Load system header.
+            truncate(head, strchr(head, '\n'));
         } else if (strncmp("#include", head, 8) == 0) {
             // Extract target filename.
             char const* filename_head = head + 10;
