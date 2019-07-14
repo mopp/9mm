@@ -226,7 +226,9 @@ static void expand_macros(char* head)
             if (is_defined) {
                 // Keep the lines between #else and #endif.
                 truncate(endif_head, endif_tail);
-                truncate(head, else_tail);
+                if (else_head != NULL) {
+                    truncate(head, else_tail);
+                }
             } else {
                 // Keep the lines between #ifndef and #else.
                 truncate(else_head, endif_tail);
@@ -253,7 +255,9 @@ static void expand_macros(char* head)
             } else {
                 // Keep the lines between #else and #endif.
                 truncate(endif_head, endif_tail);
-                truncate(head, else_tail);
+                if (else_head != NULL) {
+                    truncate(head, else_tail);
+                }
             }
         } else {
             ++head;
