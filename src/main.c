@@ -1,8 +1,10 @@
 #include "9mm.h"
 
-static char const* read_file(char const*);
-static char const* load_headers(char const*, char const*);
-static char const* preprocess(char*);
+static char* read_file(char const*);
+static char const* preprocess(char*, char const*);
+static char* load_headers(char*, char const*);
+static void expand_macros(char*);
+static void truncate(char*, char const*);
 static char const* input;
 static char const* filename;
 
@@ -27,11 +29,9 @@ int main(int argc, char const* const* argv)
     } else {
         // The given file contains source code.
         filename = argv[1];
-        input = read_file(filename);
-        char const* dir = strndup(argv[1], strchr(argv[1], '/') - argv[1]);
-        input = load_headers(dir, input);
-        input = preprocess(input);
-        free((void*)dir);
+
+        char* content = read_file(filename);
+        input = preprocess(content, filename);
     }
 
     Vector const* tokens = tokenize(input);
@@ -86,7 +86,7 @@ void _log(char const* level, const char* file, const char* func, size_t line, ch
 }
 
 // 指定されたファイルの内容を返す
-static char const* read_file(char const* path)
+static char* read_file(char const* path)
 {
     // ファイルを開く
     FILE* fp = fopen(path, "r");
@@ -118,9 +118,30 @@ static char const* read_file(char const* path)
     return buf;
 }
 
-static char const* load_headers(char const* dir, char const* p)
+static char const* preprocess(char* content, char const* filepath)
 {
-    char const* code_head = p;
+    char* dir_path = NULL;
+    char* p = strchr(filepath, '/');
+    if (p == NULL) {
+        dir_path = "./";
+    } else {
+        dir_path = strndup(filepath, p - filepath);
+    }
+
+    content = load_headers(content, dir_path);
+
+    if (p != NULL) {
+        free(dir_path);
+    }
+
+    expand_macros(content);
+
+    return content;
+}
+
+static char* load_headers(char* p, char const* dir)
+{
+    char* code_head = p;
 
     while (*p) {
         if (strncmp("//", p, 2) == 0) {
@@ -167,20 +188,9 @@ static char const* load_headers(char const* dir, char const* p)
     return code_head;
 }
 
-static void truncate(char* p, char const* tail)
-{
-    while (*tail) {
-        *p = *tail;
-        ++p;
-        ++tail;
-    }
-    *p = '\0';
-}
-
 // FIXME: Support nested macro and multiline macro.
-static char const* preprocess(char* head)
+static void expand_macros(char* head)
 {
-    char* code_head = head;
     Map* macros = new_map();
 
     while (*head) {
@@ -249,6 +259,14 @@ static char const* preprocess(char* head)
             ++head;
         }
     }
+}
 
-    return code_head;
+static void truncate(char* p, char const* tail)
+{
+    while (*tail) {
+        *p = *tail;
+        ++p;
+        ++tail;
+    }
+    *p = '\0';
 }
