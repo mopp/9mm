@@ -144,10 +144,7 @@ static char* load_headers(char* head, char const* dir_path)
     char* code_head = head;
 
     while (*head) {
-        if (strncmp("//", head, 2) == 0) {
-            // Skip line comment.
-            head = strchr(head, '\n') + 1;
-        } else if (strncmp("#include <", head, 10) == 0) {
+        if (strncmp("#include <", head, 10) == 0) {
             // FIXME: Load system header.
             truncate(head, strchr(head, '\n'));
         } else if (strncmp("#include", head, 8) == 0) {
@@ -184,7 +181,7 @@ static char* load_headers(char* head, char const* dir_path)
             code_head = prog;
             head = code_head;
         } else {
-            ++head;
+            head = strchr(head, '\n') + 1;
         }
     }
 
@@ -197,10 +194,7 @@ static void expand_macros(char* head)
     Map* macros = new_map();
 
     while (*head) {
-        if (strncmp("//", head, 2) == 0) {
-            // Skip line comment.
-            head = strchr(head, '\n') + 1;
-        } else if (strncmp("#define ", head, 8) == 0) {
+        if (strncmp("#define ", head, 8) == 0) {
             char const* define_head = head + 8;
             char const* define_tail = strchr(define_head, '\n');
 
@@ -263,7 +257,7 @@ static void expand_macros(char* head)
                 }
             }
         } else {
-            ++head;
+            head = strchr(head, '\n') + 1;
         }
     }
 }
