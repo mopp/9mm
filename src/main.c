@@ -139,24 +139,24 @@ static char const* preprocess(char* content, char const* filepath)
     return content;
 }
 
-static char* load_headers(char* p, char const* dir)
+static char* load_headers(char* head, char const* dir_path)
 {
-    char* code_head = p;
+    char* code_head = head;
 
-    while (*p) {
-        if (strncmp("//", p, 2) == 0) {
+    while (*head) {
+        if (strncmp("//", head, 2) == 0) {
             // Skip line comment.
-            p = strchr(p, '\n') + 1;
-        } else if (strncmp("#include", p, 8) == 0) {
+            head = strchr(head, '\n') + 1;
+        } else if (strncmp("#include", head, 8) == 0) {
             // Extract target filename.
-            char const* filename_head = p + 10;
+            char const* filename_head = head + 10;
             char const* filename_tail = strchr(filename_head, '"');
             size_t filename_size = filename_tail - filename_head;
 
             // Concat directory and filename.
-            char* filepath = malloc(sizeof(char) * (strlen(dir) + filename_size + 1 + 1));
+            char* filepath = malloc(sizeof(char) * (strlen(dir_path) + filename_size + 1 + 1));
             *filepath = 0;
-            strncat(filepath, dir, strlen(dir));
+            strncat(filepath, dir_path, strlen(dir_path));
             strncat(filepath, "/", 2);
             strncat(filepath, filename_head, filename_size);
 
@@ -168,7 +168,7 @@ static char* load_headers(char* p, char const* dir)
             *prog = 0;
 
             // Load lines before current header.
-            strncat(prog, code_head, p - code_head);
+            strncat(prog, code_head, head - code_head);
             // Load the header file.
             strncat(prog, content, strlen(content));
             // Load lines after the header.
@@ -179,9 +179,9 @@ static char* load_headers(char* p, char const* dir)
             free((void*)code_head);
 
             code_head = prog;
-            p = code_head;
+            head = code_head;
         } else {
-            ++p;
+            ++head;
         }
     }
 
