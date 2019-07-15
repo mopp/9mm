@@ -1,5 +1,6 @@
 #include "9mm.h"
 
+#ifndef SELFHOST_9MM
 static Node* global(void);
 static Node* function(Type*);
 static void strut(void);
@@ -23,30 +24,31 @@ static Node* new_node(int, Node*, Node*);
 static Node* new_node_num(int);
 static Type* new_type(int, Type const*);
 static Type* new_user_type(UserType*);
-static inline size_t get_type_size(Type const*);
-static inline Context* new_context(void);
-static inline Node* convert_ptr_plus_minus(Node*);
+static size_t get_type_size(Type const*);
+static Context* new_context(void);
+static Node* convert_ptr_plus_minus(Node*);
+#endif
 
 // トークナイズした結果のトークン列
-static Vector const* token_vector = NULL;
+static Vector const* token_vector;
 
 // 現在読んでいるトークンの位置.
 static int pos;
 
 // Current context.
-static Context* context = NULL;
+static Context* context;
 
 // Global variable type map.
-static Map* gvar_type_map = NULL;
+static Map* gvar_type_map;
 
 // String literal to label map.
-Map* str_label_map = NULL;
+Map* str_label_map;
 
 // Name to user defined type map.
-Map* user_types = NULL;
+Map* user_types;
 
 // Enum member to number.
-static Map* enum_map = NULL;
+static Map* enum_map;
 
 Node const* const* program(Vector const* tv)
 {
@@ -761,7 +763,7 @@ static Node* ref_var(void)
             error_if_null(user_type);
 
             char const* member_name = tokens[pos++]->name;
-            size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+            size_t offset = (size_t)map_get(user_type->member_offset_map, member_name);
 
             Type* member_type = map_get(user_type->member_type_map, member_name);
             error_if_null(member_type);
@@ -783,7 +785,7 @@ static Node* ref_var(void)
             error_if_null(user_type);
 
             char const* member_name = tokens[pos++]->name;
-            size_t offset = (uintptr_t)map_get(user_type->member_offset_map, member_name);
+            size_t offset = (size_t)map_get(user_type->member_offset_map, member_name);
 
             Type* member_type = map_get(user_type->member_type_map, member_name);
             error_if_null(member_type);
@@ -994,7 +996,7 @@ static Type* new_user_type(UserType* user_type)
     return type;
 }
 
-static inline size_t get_type_size(Type const* type)
+static size_t get_type_size(Type const* type)
 {
     error_if_null(type);
 
@@ -1013,7 +1015,7 @@ static inline size_t get_type_size(Type const* type)
     }
 }
 
-static inline Context* new_context(void)
+static Context* new_context(void)
 {
     Context* context = malloc(sizeof(Context));
 

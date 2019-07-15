@@ -1,9 +1,11 @@
 #include "9mm.h"
 
+#ifndef SELFHOST_9MM
 static int is_eq(char const*, char const*);
 static Token* new_token(int, char const*);
 static char const* skip(char const*);
 static int is_alnum(char);
+#endif
 
 Vector const* tokenize(char const* p)
 {
@@ -11,7 +13,6 @@ Vector const* tokenize(char const* p)
 
     while (*p) {
         p = skip(p);
-
 
         Token* token = NULL;
         if (*p == '\0') {
@@ -22,7 +23,7 @@ Vector const* tokenize(char const* p)
         } else if (is_eq(p, "typedef")) {
             token = new_token(TK_TYPEDEF, p);
             p += 7;
-        } else if (is_eq(p, "enum")) {
+        } else if (is_eq(p, "enum ")) {
             token = new_token(TK_ENUM, p);
             p += 4;
         } else if (is_eq(p, "break;")) {

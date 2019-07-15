@@ -1,9 +1,11 @@
 #include "9mm.h"
 
-static Context const* context = NULL;
+static Context const* codegen_context;
 
+#ifndef SELFHOST_9MM
 static void gen(Node const*);
 static void gen_var_addr(Node const*);
+#endif
 
 void generate(Node const* const* code)
 {
@@ -150,7 +152,7 @@ static void gen(Node const* node)
 
         printf("%s:\n", node->function->name);
 
-        context = node->function->context;
+        codegen_context = node->function->context;
 
         // プロローグ.
         printf("  push rbp\n");
@@ -176,7 +178,7 @@ static void gen(Node const* node)
         printf("  pop rbp\n");
         printf("  ret\n");
 
-        context = NULL;
+        codegen_context = NULL;
 
         return;
     }
@@ -410,7 +412,7 @@ static void gen_var_addr(Node const* node)
     if (node->ty == ND_LVAR) {
         printf("  # Reference local var: %s\n", node->name);
         printf("  mov rax, rbp\n");
-        printf("  sub rax, %zd\n", (uintptr_t)map_get(context->var_offset_map, node->name));
+        printf("  sub rax, %zd\n", (size_t)map_get(codegen_context->var_offset_map, node->name));
         printf("  push rax\n");
     } else if (node->ty == ND_GVAR) {
         printf("  # Reference global var: %s\n", node->name);

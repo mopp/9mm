@@ -1,6 +1,3 @@
-#ifndef H_9MM
-#define H_9MM
-
 #define _XOPEN_SOURCE 700
 
 #include "container.h"
@@ -73,10 +70,10 @@ enum {
 
 struct token {
     int ty; // トークンの型
-    union {
+    // union {
         int val;          // tyがTK_NUMの場合、その数値
         char const* name; // tyがTK_IDENTの場合、その名前
-    };
+    // };
     char const* input; // トークン文字列（エラーメッセージ用）
 };
 typedef struct token Token;
@@ -152,7 +149,7 @@ struct node {
     struct node* lhs;  // Left-hand-side
     struct node* rhs;  // Right-hand-size
     Type const* rtype; // Type of result of "expr" of "Node".
-    union {
+    // union {
         int val;              // for "ND_NUM"
         char const* name;     // for "ND_LVAR"
         size_t member_offset; // for "ND_DOT_REF"
@@ -164,10 +161,11 @@ struct node {
         char const* label; // for "ND_STR"
         char const* break_label;
         void* tv;
-    };
+    // };
 };
 typedef struct node Node;
 
+#ifndef SELFHOST_9MM
 // main.c
 void error_at(char const*, char const*);
 void _log(char const*, const char*, const char*, size_t, char const*, ...);
@@ -196,13 +194,12 @@ Vector const* tokenize(char const*);
 
 // parse.c
 Node const* const* program(Vector const*);
-extern Map* str_label_map;
-extern Map* user_types;
 
 // codegen.c
 void generate(Node const* const*);
 
 void runtest();
+#endif
 
-
-#endif /* end of include guard */
+extern Map* str_label_map;
+extern Map* user_types;

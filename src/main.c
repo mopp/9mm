@@ -1,10 +1,15 @@
 #include "9mm.h"
 
+#ifdef SELFHOST_9MM
+extern void* stderr;
+#else
 static char* read_file(char const*);
 static char const* preprocess(char*, char const*);
 static char* load_headers(char*, char const*);
 static void expand_macros(char*);
 static void truncate(char*, char const*);
+#endif
+
 static char const* input;
 static char const* filename;
 
@@ -19,7 +24,7 @@ int main(int argc, char const* const* argv)
     }
 
     if (strncmp("--test", argv[1], 5) == 0) {
-        runtest();
+        /* runtest(); */
         return 0;
     }
 
@@ -32,6 +37,10 @@ int main(int argc, char const* const* argv)
 
         char* content = read_file(filename);
         input = preprocess(content, filename);
+        // puts("===================");
+        // puts(input);
+        // puts("===================");
+        // fflush(stdout);
     }
 
     Vector const* tokens = tokenize(input);
@@ -74,6 +83,7 @@ void error_at(char const* loc, char const* msg)
     exit(1);
 }
 
+#ifndef SELFHOST_9MM
 // Output log for me and exit.
 void _log(char const* level, const char* file, const char* func, size_t line, char const* fmt, ...)
 {
@@ -84,6 +94,14 @@ void _log(char const* level, const char* file, const char* func, size_t line, ch
     fprintf(stderr, "\n");
     va_end(ap);
 }
+#else
+void error_if_null(void* var)
+{
+    if (var == NULL) {
+        error("NULL is given");
+    }
+}
+#endif
 
 static char* read_file(char const* path)
 {
@@ -192,6 +210,7 @@ static void expand_macros(char* head)
 {
     char* stored_head = head;
     Map* macros = new_map();
+    map_put(macros, "SELFHOST_9MM", "SELFHOST_9MM");
 
     while (*head) {
         if (strncmp("#define ", head, 8) == 0) {

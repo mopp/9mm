@@ -59,6 +59,7 @@ void* map_get(Map* map, char const* key)
     return NULL;
 }
 
+#ifndef SELFHOST_9MM
 static void expect(int line, int expected, int actual)
 {
     if (expected == actual)
@@ -106,3 +107,4 @@ void runtest()
     test_vector();
     test_map();
 }
+#endif
