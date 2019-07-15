@@ -25,7 +25,7 @@ Vector const* tokenize(char const* p)
         } else if (is_eq(p, "enum")) {
             token = new_token(TK_ENUM, p);
             p += 4;
-        } else if (is_eq(p, "break")) {
+        } else if (is_eq(p, "break;")) {
             token = new_token(TK_BREAK, p);
             p += 5;
         } else if (is_eq(p, "+=")) {
