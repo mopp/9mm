@@ -117,6 +117,7 @@ static Node* global()
         if (!consume(';')) {
             error_at(tokens[pos]->input, "';' is missing");
         }
+        return global();
     }
 
     Type* type = parse_type();
