@@ -42,7 +42,7 @@ int main(int argc, char const* const* argv)
 }
 
 // Output an error for user and exit.
-_Noreturn void error_at(char const* loc, char const* msg)
+void error_at(char const* loc, char const* msg)
 {
     // locが含まれている行の開始地点と終了地点を取得
     char const* line = loc;

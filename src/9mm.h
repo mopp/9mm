@@ -96,6 +96,8 @@ struct node_function {
 };
 typedef struct node_function NodeFunction;
 
+struct node;
+
 struct node_if_else {
     struct node* condition;
     struct node* body;
@@ -126,14 +128,18 @@ struct user_type {
 };
 typedef struct user_type UserType;
 
+enum {
+    CHAR,
+    INT,
+    PTR,
+    ARRAY,
+    USER,
+    VOID,
+    SIZE_T
+};
+
 struct type {
-    enum { CHAR,
-           INT,
-           PTR,
-           ARRAY,
-           USER,
-           VOID,
-           SIZE_T } ty;
+    int ty;
     struct type const* ptr_to;
     size_t size;
     UserType* user_type; // Valid if ty is USER
@@ -162,7 +168,7 @@ struct node {
 typedef struct node Node;
 
 // main.c
-_Noreturn void error_at(char const*, char const*);
+void error_at(char const*, char const*);
 void _log(char const*, const char*, const char*, size_t, char const*, ...);
 
 #define __log(level, ...) \
