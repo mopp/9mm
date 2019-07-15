@@ -218,7 +218,7 @@ static void expand_macros(char* head)
             char* else_head = strstr(head, "#else\n");
             char* else_tail = else_head + 5;
             char* endif_head = strstr(head, "#endif\n");
-            char* endif_tail = endif_head + 8;
+            char* endif_tail = endif_head + 7;
             int has_else = else_head != NULL && else_head < endif_head;
 
             if (is_defined) {
@@ -245,27 +245,27 @@ static void expand_macros(char* head)
             int is_defined = map_get(macros, ifdef_ident) != NULL;
             free(ifdef_ident);
 
-            // Remove #ifndef line.
+            // Remove #ifdef line.
             truncate(head, ifdef_tail + 1);
 
-            char* else_head = strstr(head, "#else");
-            char* else_tail = strchr(else_head, '\n') + 1;
-            char* endif_head = strstr(head, "#endif");
-            char* endif_tail = strchr(endif_head, '\n') + 1;
+            char* else_head = strstr(head, "#else\n");
+            char* else_tail = else_head + 5;
+            char* endif_head = strstr(head, "#endif\n");
+            char* endif_tail = endif_head + 7;
             int has_else = else_head != NULL && else_head < endif_head;
 
-            if (!is_defined) {
+            if (is_defined) {
+                // Keep the lines between #ifdef and #else.
+                if (has_else) {
+                    truncate(else_head, endif_tail);
+                } else {
+                    truncate(endif_head, endif_tail);
+                }
+            } else {
                 // Keep the lines between #ifdef/#else and #endif.
                 if (has_else) {
                     truncate(endif_head, endif_tail);
                     truncate(head, else_tail);
-                } else {
-                    truncate(head, endif_tail);
-                }
-            } else {
-                // Keep the lines between #ifdef and #else.
-                if (has_else) {
-                    truncate(else_head, endif_tail);
                 } else {
                     truncate(head, endif_tail);
                 }

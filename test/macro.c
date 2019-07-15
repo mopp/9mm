@@ -1,45 +1,35 @@
 // head
 #ifndef MOPP
-// ok
-#endif
-
-#ifndef MOPP
-// ok
+// ok ifndef 1
 #else
-// error
+// error 1
 #endif
-
 #ifdef MOPP
-// error
+// error 2
 #endif
-
 #ifdef MOPP
-// error
+// error 3
 #else
-// ok
+// ok ifdef 2
 #endif
-
 #define MOPP
-
 #ifndef MOPP
-// error
+// error 4
 #endif
-
 #ifndef MOPP
-// error
+// error 5
 #else
-// ok
+// ok ifndef 3
 #endif
-
 #ifdef MOPP
-// ok
+// ok ifdef 4
 #endif
-
 #ifdef MOPP
-// ok
+// ok ifdef 5
 #else
-// error
+// error 6
 #endif
+// tail
 
 int main(void) {
     return NULL;
