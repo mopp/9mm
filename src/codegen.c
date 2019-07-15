@@ -1,8 +1,5 @@
 #include "9mm.h"
 
-static char const* const regs64[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-static char const* const regs32[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
-
 static Context const* context = NULL;
 
 static void gen(Node const*);
@@ -48,6 +45,22 @@ void generate(Node const* const* code)
 
 static void gen(Node const* node)
 {
+    char* regs64[6];
+    regs64[0] = "rdi";
+    regs64[1] = "rsi";
+    regs64[2] = "rdx";
+    regs64[3] = "rcx";
+    regs64[4] = "r8";
+    regs64[5] = "r9";
+
+    char* regs32[6];
+    regs32[0] = "edi";
+    regs32[1] = "esi";
+    regs32[2] = "edx";
+    regs32[3] = "ecx";
+    regs32[4] = "r8d";
+    regs32[5] = "r9d";
+
     if (node->ty == '!') {
         gen(node->lhs);
         printf("  pop rax\n");
