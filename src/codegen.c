@@ -322,6 +322,7 @@ static void gen(Node const* node)
 
     if (node->ty == ND_INIT) {
         gen(node->lhs);
+        printf("  pop rax\n");
         gen(node->rhs);
         return;
     }
