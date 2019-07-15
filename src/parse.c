@@ -937,6 +937,8 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
         case '>':
         case ND_CALL:
         case ND_NUM:
+        case ND_AND:
+        case ND_OR:
             node->rtype = new_type(INT, NULL);
             break;
         case ND_REF:
