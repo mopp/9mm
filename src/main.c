@@ -85,29 +85,28 @@ void _log(char const* level, const char* file, const char* func, size_t line, ch
     va_end(ap);
 }
 
-// 指定されたファイルの内容を返す
 static char* read_file(char const* path)
 {
-    // ファイルを開く
-    FILE* fp = fopen(path, "r");
+    void* fp = fopen(path, "r");
     if (fp == NULL) {
-        error("cannot open %s: %s", path, strerror(errno));
+        error("cannot open %s", path);
     }
 
-    // ファイルの長さを調べる
-    if (fseek(fp, 0, SEEK_END) == -1) {
-        error("%s: fseek: %s", path, strerror(errno));
+    // FIXME: use SEEK_END
+    if (fseek(fp, 0, 2) == -1) {
+        error("%s: fseek", path);
     }
+
+    // FIXME: use SEEK_SET
     size_t size = ftell(fp);
-    if (fseek(fp, 0, SEEK_SET) == -1) {
-        error("%s: fseek: %s", path, strerror(errno));
+    if (fseek(fp, 0, 0) == -1) {
+        error("%s: fseek", path);
     }
 
-    // ファイル内容を読み込む
     char* buf = calloc(1, size + 2);
     fread(buf, size, 1, fp);
 
-    // ファイルが必ず"\n\0"で終わっているようにする
+    // Enforce the content is terminated by "\n\0".
     if (size == 0 || buf[size - 1] != '\n') {
         buf[size++] = '\n';
     }
