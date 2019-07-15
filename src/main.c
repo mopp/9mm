@@ -191,6 +191,7 @@ static char* load_headers(char* head, char const* dir_path)
 // FIXME: Support nested macro and multiline macro.
 static void expand_macros(char* head)
 {
+    char* stored_head = head;
     Map* macros = new_map();
 
     while (*head) {
@@ -270,6 +271,19 @@ static void expand_macros(char* head)
                     truncate(head, endif_tail);
                 }
             }
+        } else {
+            head = strchr(head, '\n') + 1;
+        }
+    }
+
+    head = stored_head;
+
+    // FIXME: read argument of "#define" and replace them here.
+    while (*head) {
+        char* null_head = strstr(head, "NULL");
+        if (null_head != NULL && *(null_head - 1) != '"') {
+            *null_head = '0';
+            truncate(null_head + 1, null_head + 4);
         } else {
             head = strchr(head, '\n') + 1;
         }
