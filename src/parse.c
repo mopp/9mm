@@ -935,6 +935,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
             break;
         case '<':
         case '>':
+        case '!':
         case ND_CALL:
         case ND_NUM:
         case ND_AND:
