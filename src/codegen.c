@@ -348,6 +348,7 @@ static void gen(Node const* node)
         printf("  pop rdi\n");
         printf("  pop rax\n");
 
+        error_if_null(node->rtype);
         if (node->rtype->size == 1) {
             printf("  mov [rax], dl\n");
         } else if (node->rtype->size == 4) {
@@ -367,12 +368,12 @@ static void gen(Node const* node)
     printf("  pop rax\n");
 
     switch (node->ty) {
-        case TK_EQ:
+        case ND_EQ:
             printf("  cmp rax, rdi\n");
             printf("  sete al\n");
             printf("  movzb rax, al\n");
             break;
-        case TK_NE:
+        case ND_NE:
             printf("  cmp rax, rdi\n");
             printf("  setne al\n");
             printf("  movzb rax, al\n");

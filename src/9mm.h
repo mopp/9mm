@@ -37,6 +37,8 @@ enum {
     ND_ARROW_REF, // obj->x
     ND_INIT,      // int x = 3
     ND_BREAK,     // break
+    ND_EQ,        // ==
+    ND_NE,        // !=
 
     // トークンの型を表す値
     TK_RETURN,

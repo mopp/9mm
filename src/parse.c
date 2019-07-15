@@ -490,9 +490,9 @@ static Node* equality(void)
 
     for (;;) {
         if (consume(TK_EQ))
-            node = new_node(TK_EQ, node, relational());
+            node = new_node(ND_EQ, node, relational());
         else if (consume(TK_NE))
-            node = new_node(TK_NE, node, relational());
+            node = new_node(ND_NE, node, relational());
         else
             return node;
     }
@@ -940,6 +940,8 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
         case ND_NUM:
         case ND_AND:
         case ND_OR:
+        case ND_NE:
+        case ND_EQ:
             node->rtype = new_type(INT, NULL);
             break;
         case ND_REF:
