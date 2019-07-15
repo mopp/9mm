@@ -156,8 +156,9 @@ static Node* function(Type* type)
     while (!consume(')')) {
         if (consume(TK_EOF)) {
             error_at(tokens[pos]->input, "関数の)が無い");
-        } else if (strcmp(tokens[pos]->name, "void") == 0) {
-            ++pos;
+        } else if (strcmp(tokens[pos]->name, "void") == 0 && tokens[pos + 1]->ty == ')') {
+            pos += 2;
+            break;
         } else {
             vec_push(node->function->args, decl_var(parse_type()));
 
