@@ -792,30 +792,30 @@ static Node* ref_var(void)
             node->member_offset = offset;
             node->rtype = member_type;
         } else {
-            break;
+            type = node->rtype;
+            if (consume('[')) {
+                // Accessing the array argument via the given index.
+                if (node->rtype->ty != ARRAY && node->rtype->ty != PTR) {
+                    error_at(tokens[pos - 2]->input, "Array or pointer only can be accessed via index");
+                }
+
+                // Accessing the array via the given index.
+                Node* node_index_expr = expr();
+
+                if (!consume(']')) {
+                    error_at(tokens[pos - 1]->input, "']' is missing");
+                }
+
+                // a[0] -> *(a + 0).
+                // obj.x[0] -> *(obj.x + 0).
+                node = new_node('+', node, node_index_expr);
+                node->rtype = type;
+
+                node = new_node(ND_DEREF, node, NULL);
+            } else {
+                break;
+            }
         }
-    }
-
-    type = node->rtype;
-    if (consume('[')) {
-        // Accessing the array argument via the given index.
-        if (node->rtype->ty != ARRAY && node->rtype->ty != PTR) {
-            error_at(tokens[pos - 2]->input, "Array or pointer only can be accessed via index");
-        }
-
-        // Accessing the array via the given index.
-        Node* node_index_expr = expr();
-
-        if (!consume(']')) {
-            error_at(tokens[pos - 1]->input, "']' is missing");
-        }
-
-        // a[0] -> *(a + 0).
-        // obj.x[0] -> *(obj.x + 0).
-        node = new_node('+', node, node_index_expr);
-        node->rtype = type;
-
-        node = new_node(ND_DEREF, node, NULL);
     }
 
     if (consume(TK_INCL)) {
