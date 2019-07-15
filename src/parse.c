@@ -906,79 +906,62 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     node->lhs = lhs;
     node->rhs = rhs;
 
+
     // Allocate the type specific object.
-    switch (ty) {
-        case ND_FUNCTION:
-            node->function = malloc(sizeof(NodeFunction));
-            node->function->args = new_vector();
-            break;
-        case ND_BLOCK:
-            node->stmts = new_vector();
-            break;
-        case ND_IF:
-            node->if_else = malloc(sizeof(NodeIfElse));
-            break;
-        case ND_FOR:
-            node->fors = malloc(sizeof(NodeFor));
-            break;
-        case ND_CALL:
-            node->call = malloc(sizeof(NodeCall));
-            break;
-        default:
-            node->tv = NULL;
+    if (ty == ND_FUNCTION) {
+        node->function = malloc(sizeof(NodeFunction));
+        node->function->args = new_vector();
+    } else if (ty == ND_FUNCTION || ty == ND_BLOCK) {
+        node->stmts = new_vector();
+    } else if (ty == ND_IF) {
+        node->if_else = malloc(sizeof(NodeIfElse));
+    } else if (ty == ND_FOR) {
+        node->fors = malloc(sizeof(NodeFor));
+    } else if (ty == ND_CALL) {
+        node->call = malloc(sizeof(NodeCall));
+    } else {
+        node->tv = NULL;
     }
 
     // Find the type of result of this node.
-    switch (ty) {
-        case '=':
+    if (ty == '=') {
+        node->rtype = rhs->rtype;
+    } else if (ty == '<' || ty == '>' ||
+               ty == '!' || ty == ND_CALL ||
+               ty == ND_NUM || ty == ND_AND ||
+               ty == ND_OR || ty == ND_NE ||
+               ty == ND_EQ) {
+        node->rtype = new_type(INT, NULL);
+    } else if (ty == ND_REF) {
+        node->rtype = new_type(PTR, node->lhs->rtype);
+    } else if (ty == ND_STR) {
+        node->rtype = new_type(PTR, new_type(CHAR, NULL));
+    } else if (ty == ND_DEREF) {
+        if (lhs->rtype->ptr_to == NULL) {
+            error("You can dereference only pointer or array");
+        }
+        node->rtype = lhs->rtype->ptr_to;
+    } else if (ty == ND_RETURN) {
+
+        node->rtype = lhs->rtype;
+    } else if (ty == '+' || ty == '-' ||
+               ty == '*' || ty == '/') {
+        error_if_null(lhs->rtype);
+        error_if_null(rhs->rtype);
+        if (lhs->rtype->size < rhs->rtype->size) {
             node->rtype = rhs->rtype;
-            break;
-        case '<':
-        case '>':
-        case '!':
-        case ND_CALL:
-        case ND_NUM:
-        case ND_AND:
-        case ND_OR:
-        case ND_NE:
-        case ND_EQ:
-            node->rtype = new_type(INT, NULL);
-            break;
-        case ND_REF:
-            node->rtype = new_type(PTR, node->lhs->rtype);
-            break;
-        case ND_STR:
-            node->rtype = new_type(PTR, new_type(CHAR, NULL));
-            break;
-        case ND_DEREF:
-            if (lhs->rtype->ptr_to == NULL) {
-                error("You can dereference only pointer or array");
-            }
-            node->rtype = lhs->rtype->ptr_to;
-            break;
-        case ND_RETURN:
+        } else {
             node->rtype = lhs->rtype;
-            break;
-        case '+':
-        case '-':
-        case '*':
-        case '/':
-            error_if_null(lhs->rtype);
-            error_if_null(rhs->rtype);
-            node->rtype = (lhs->rtype->size < rhs->rtype->size) ? rhs->rtype : lhs->rtype;
-            break;
-        case ND_INCL_POST:
-        case ND_DECL_POST:
-            node->rtype = rhs->rtype;
-            break;
-        case ND_LVAR:
-        case ND_LVAR_NEW:
-        case ND_DOT_REF:
-        case ND_ARROW_REF:
-        default:
-            /* rtype is set outside or unused */
-            node->rtype = NULL;
+        }
+    } else if (ty == ND_INCL_POST || ty == ND_DECL_POST) {
+        node->rtype = rhs->rtype;
+    } else {
+        /* rtype is set outside or unused */
+        node->rtype = NULL;
+        return convert_ptr_plus_minus(node);
     }
+
+    error_if_null(node->rtype);
 
     return convert_ptr_plus_minus(node);
 }
@@ -1014,21 +997,18 @@ static inline size_t get_type_size(Type const* type)
 {
     error_if_null(type);
 
-    switch (type->ty) {
-        case CHAR:
-            return 1;
-        case INT:
-            return 4;
-        case PTR:
-        case SIZE_T:
-            return 8;
-        case ARRAY:
-        case USER:
-        case VOID:
-            // Size of array is set by yourself.
-            return 0;
-        default:
-            error("unknown type");
+    int ty = type->ty;
+    if (ty == CHAR) {
+        return 1;
+    } else if (ty == INT) {
+        return 4;
+    } else if (ty == PTR || ty == SIZE_T) {
+        return 8;
+    } else if (ty == ARRAY || ty == USER || ty == VOID) {
+        // Size of array is set by yourself.
+        return 0;
+    } else {
+        error("unknown type");
     }
 }
 

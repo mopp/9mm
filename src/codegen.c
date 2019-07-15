@@ -367,47 +367,38 @@ static void gen(Node const* node)
     printf("  pop rdi\n");
     printf("  pop rax\n");
 
-    switch (node->ty) {
-        case ND_EQ:
-            printf("  cmp rax, rdi\n");
-            printf("  sete al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case ND_NE:
-            printf("  cmp rax, rdi\n");
-            printf("  setne al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case '<':
-            printf("  cmp rax, rdi\n");
-            printf("  setl al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case TK_LE:
-            printf("  cmp rax, rdi\n");
-            printf("  setle al\n");
-            printf("  movzb rax, al\n");
-            break;
-        case TK_GE:
-            error("Bug, parser: TK_GE exists\n");
-            break;
-        case '>':
-            error("Bug, parser: > exists\n");
-            break;
-        case '+':
-            printf("  add rax, rdi\n");
-            break;
-        case '-':
-            printf("  sub rax, rdi\n");
-            break;
-        case '*':
-            // rax * rdi -> rdxに上位、raxに下位
-            printf("  imul rdi\n");
-            break;
-        case '/':
-            // cqo命令でraxの値を128に拡張してrdxとraxにセットする
-            printf("  cqo\n");
-            printf("  idiv rdi\n");
+    int ty = node->ty;
+
+    if (ty == ND_EQ) {
+        printf("  cmp rax, rdi\n");
+        printf("  sete al\n");
+        printf("  movzb rax, al\n");
+    } else if (ty == ND_NE) {
+        printf("  cmp rax, rdi\n");
+        printf("  setne al\n");
+        printf("  movzb rax, al\n");
+    } else if (ty == '<') {
+        printf("  cmp rax, rdi\n");
+        printf("  setl al\n");
+        printf("  movzb rax, al\n");
+    } else if (ty == TK_LE) {
+        printf("  cmp rax, rdi\n");
+        printf("  setle al\n");
+        printf("  movzb rax, al\n");
+    } else if (ty == TK_GE || ty == '>') {
+        error("parser has a bug");
+    } else if (ty == '+') {
+        printf("  add rax, rdi\n");
+    } else if (ty == '-') {
+        printf("  sub rax, rdi\n");
+    } else if (ty == '*') {
+        // rax * rdi
+        // rdx has upper bits, rax has lower bits.
+        printf("  imul rdi\n");
+    } else if (ty == '/') {
+        // cqo instruction expands value in rax 128 and set rdx and rax.
+        printf("  cqo\n");
+        printf("  idiv rdi\n");
     }
 
     printf("  push rax\n");
