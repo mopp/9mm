@@ -7,14 +7,19 @@ OBJS   = $(SRCS:.c=.o)
 
 $(OBJS): src/9mm.h
 
-selfhost: 9mm
+.PHONY: selfhost
+selfhost: 9mms
+
+9mms: 9mm
 	cat src/main.c src/tokenize.c src/parse.c src/codegen.c src/container.c > src/self.c
 	./9mm ./src/self.c > ./src/self.s
 	gcc -g -no-pie ./src/self.s -o 9mms
 
+.PHONY: test
 test: 9mm
 	./9mm --test
 	./test.sh
 
+.PHONY: clean
 clean:
 	rm -f 9mm src/*.o *~ tmp tmp.s src/self.c src/self.s 9mms
