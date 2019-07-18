@@ -37,10 +37,6 @@ int main(int argc, char const* const* argv)
 
         char* content = read_file(filename);
         input = preprocess(content, filename);
-        // puts("===================");
-        // puts(input);
-        // puts("===================");
-        // fflush(stdout);
     }
 
     Vector const* tokens = tokenize(input);
