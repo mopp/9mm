@@ -347,15 +347,22 @@ static void gen(Node const* node)
         gen_var_addr(node->lhs);
         gen(node->rhs);
 
-        printf("  pop rdi\n");
-        printf("  pop rax\n");
-
         error_if_null(node->rtype);
         if (node->rtype->size == 1) {
-            printf("  mov [rax], dl\n");
+            printf("  xor rdi, rdi\n");
+            printf("  mov di, [rsp]\n");
+            printf("  pop rax\n");
+            printf("  pop rax\n");
+            printf("  mov [rax], di\n");
         } else if (node->rtype->size == 4) {
+            printf("  xor rdi, rdi\n");
+            printf("  mov edi, [rsp]\n");
+            printf("  pop rax\n");
+            printf("  pop rax\n");
             printf("  mov [rax], edi\n");
         } else {
+            printf("  pop rdi\n");
+            printf("  pop rax\n");
             printf("  mov [rax], rdi\n");
         }
 
