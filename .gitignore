@@ -2,4 +2,9 @@
 *.o
 tmp*
 9mm
+9mms
 src/self.*
+test/*.s
+test/*.bin
+test/*.out
+test/*.diff
