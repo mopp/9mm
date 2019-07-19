@@ -150,7 +150,7 @@ static void gen(Node const* node)
             return;
         }
 
-        printf("%s:\n", node->function->name);
+        printf("\n%s:\n", node->function->name);
 
         codegen_context = node->function->context;
 
