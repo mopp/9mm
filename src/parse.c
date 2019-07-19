@@ -928,7 +928,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
 
     // Find the type of result of this node.
     if (ty == '=') {
-        node->rtype = rhs->rtype;
+        node->rtype = lhs->rtype;
     } else if (ty == '<' || ty == '>' ||
                ty == '!' || ty == ND_CALL ||
                ty == ND_NUM || ty == ND_AND ||
