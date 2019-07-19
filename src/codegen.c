@@ -245,6 +245,8 @@ static void gen(Node const* node)
     }
 
     if (node->ty == ND_BREAK) {
+        // Push dummy value.
+        printf("  push 0\n");
         printf("  jmp %s\n", node->break_label);
 
         return;
