@@ -4,6 +4,7 @@ static Context const* codegen_context;
 
 #ifndef SELFHOST_9MM
 static void gen(Node const*);
+static void gen_loading_value(Node const*);
 static void gen_var_addr(Node const*);
 #endif
 
@@ -138,8 +139,7 @@ static void gen(Node const* node)
 
     if (node->ty == ND_DEREF) {
         gen(node->lhs);
-        printf("  pop rax\n");
-        printf("  push [rax]\n");
+        gen_loading_value(node);
         return;
     }
 
@@ -319,20 +319,10 @@ static void gen(Node const* node)
         gen_var_addr(node);
 
         error_if_null(node->rtype);
-        if (node->rtype->ty == ARRAY) {
-            return;
-        }
 
-        // Load the value into rax.
-        printf("  pop rax\n");
-        if (node->rtype->size == 1) {
-            printf("  movzx rax, BYTE PTR [rax]\n");
-        } else if (node->rtype->size == 4) {
-            printf("  mov eax, [rax]\n");
-        } else {
-            printf("  mov rax, [rax]\n");
+        if (node->rtype->ty != ARRAY) {
+            gen_loading_value(node);
         }
-        printf("  push rax\n");
 
         return;
     }
@@ -431,4 +421,23 @@ static void gen_var_addr(Node const* node)
     } else {
         error("You can only get address of variable");
     }
+}
+
+// Load the value which is pointed by the address on the stacktop.
+static void gen_loading_value(Node const* node)
+{
+    error_if_null(node);
+    error_if_null(node->rtype);
+
+    printf("  pop rax\n");
+
+    if (node->rtype->size == 1) {
+        printf("  movzx rax, BYTE PTR [rax]\n");
+    } else if (node->rtype->size == 4) {
+        printf("  mov eax, [rax]\n");
+    } else {
+        printf("  mov rax, [rax]\n");
+    }
+
+    printf("  push rax\n");
 }
