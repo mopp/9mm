@@ -24,7 +24,9 @@ int main(int argc, char const* const* argv)
     }
 
     if (strncmp("--test", argv[1], 5) == 0) {
-        /* runtest(); */
+#ifndef SELFHOST_9MM
+        runtest();
+#endif
         return 0;
     }
 
