@@ -158,14 +158,21 @@ static void gen(Node const* node)
         printf("  push rbp\n");
         printf("  mov rbp, rsp\n");
 
-        // 引数をスタックへ書き出し.
+        // Store arguments into the local stack.
         for (size_t i = 0; i < node->function->args->len; i++) {
             Node* arg = node->function->args->data[i];
-            if (arg->rtype->size == 4) {
+
+            if (arg->rtype->size == 1) {
+                printf("  mov rax, %s\n", regs64[i]);
+                printf("  sub rsp, 1\n");
+                printf("  mov [rsp], al\n");
+            } else if (arg->rtype->size == 4) {
                 printf("  sub rsp, 4\n");
                 printf("  mov [rsp], %s\n", regs32[i]);
-            } else {
+            } else if (arg->rtype->size == 8) {
                 printf("  push %s\n", regs64[i]);
+            } else {
+                error("Not supported");
             }
         }
 
