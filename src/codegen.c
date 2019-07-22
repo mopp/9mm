@@ -355,8 +355,10 @@ static void gen(Node const* node)
             printf("  mov [rax], dl\n");
         } else if (node->rtype->size == 4) {
             printf("  mov [rax], edx\n");
-        } else {
+        } else if (node->rtype->size == 8) {
             printf("  mov [rax], rdx\n");
+        } else {
+            error("Not supported");
         }
 
         printf("  push rdx\n");
@@ -442,8 +444,10 @@ static void gen_loading_value(Node const* node)
         printf("  movzx rax, BYTE PTR [rax]\n");
     } else if (node->rtype->size == 4) {
         printf("  mov eax, [rax]\n");
-    } else {
+    } else if (node->rtype->size == 8) {
         printf("  mov rax, [rax]\n");
+    } else {
+        error("Not supported");
     }
 
     printf("  push rax\n");
