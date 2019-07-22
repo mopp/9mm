@@ -208,3 +208,6 @@ try 0   "int main(void) { while (1) { int i = 0; break; } return 0;}"
 try 1   "int main(void) { int i = 1 != 0 && 1 < 10;  return i;}"
 try 1   "int main(void* a) { int i = 1 != 0 && 1 < 10;  return i;}"
 try 5   'struct hoge { int x; }; int main() { struct hoge** ar; struct hoge* ptr; struct hoge h; h.x = 5; ptr = &h; ar = &ptr; return ar[0]->x; }'
+try 0   "void* foo(void) { return 1229801703532086340; } int main(void) { return foo() - 1229801703532086340;}"
+try 0   "void* foo(void) { return 1229801703532086340; } int main(void) { size_t p; p = foo(); return p - 1229801703532086340;}"
+try 0   "void* foo(size_t n) { return n - 1229801703532086340; } int main(void) { return foo(1229801703532086340);}"

@@ -311,7 +311,8 @@ static void gen(Node const* node)
     }
 
     if (node->ty == ND_NUM) {
-        printf("  push %d\n", node->val);
+        printf("  mov rax, %zd\n", node->val);
+        printf("  push rax\n");
         return;
     }
 

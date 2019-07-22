@@ -71,7 +71,7 @@ enum {
 struct token {
     int ty; // トークンの型
     // union {
-        int val;          // tyがTK_NUMの場合、その数値
+        size_t val;       // tyがTK_NUMの場合、その数値
         char const* name; // tyがTK_IDENTの場合、その名前
     // };
     char const* input; // トークン文字列（エラーメッセージ用）
@@ -150,7 +150,7 @@ struct node {
     struct node* rhs;  // Right-hand-size
     Type const* rtype; // Type of result of "expr" of "Node".
     // union {
-        int val;              // for "ND_NUM"
+        size_t val;           // for "ND_NUM"
         char const* name;     // for "ND_LVAR"
         size_t member_offset; // for "ND_DOT_REF"
         NodeFunction* function;

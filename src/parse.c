@@ -969,7 +969,7 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     return convert_ptr_plus_minus(node);
 }
 
-static Node* new_node_num(int val)
+static Node* new_node_num(size_t val)
 {
     Node* node = new_node(ND_NUM, NULL, NULL);
     node->val = val;
