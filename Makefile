@@ -15,13 +15,16 @@ $(MM): $(OBJS)
 
 $(OBJS): $(HEADERS)
 
-.PHONY: selfhost
-selfhost: $(MMS)
-
 $(MMS): $(MM)
 	cat $(SRCS) > src/self.c
 	$(MM) ./src/self.c > ./src/self.s
 	$(CC) $(AFLAGS) ./src/self.s -o $@
+
+.PHONY: test
+test: $(TEST_MM) src/lib.o
+	$(TEST_MM) --test
+	./test.sh $(TEST_MM)
+	make -s $(TESTS_DIFFS) TEST_MM=$(TEST_MM)
 
 .PHONY: diffs
 diffs: $(TESTS_DIFFS)
@@ -32,11 +35,12 @@ diffs: $(TESTS_DIFFS)
 	./$*.bin > $*.out
 	diff $*.ans $*.out | tee $*.diff
 
-.PHONY: test
-test: $(MM) src/lib.o
-	$(MM) --test
-	./test.sh
-	make -s $(TESTS_DIFFS)
+.PHONY: selfhost
+selfhost: $(MMS)
+
+.PHONY: test_selfhost
+test_selfhost: $(MMS)
+	make -s test TEST_MM=$(MMS)
 
 .PHONY: clean
 clean:

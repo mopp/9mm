@@ -1,11 +1,13 @@
 ##!/bin/bash
 
+TEST_TARGET=$1
+
 try() {
     expected="$1"
     input="$2"
 
-    echo "./9mm '$input'"
-    ./9mm --str "$input" >tmp.s
+    echo "$TEST_TARGET --str '$input'"
+    $TEST_TARGET --str "$input" >tmp.s
     if [[ "$?" != "0" ]]; then
         echo 'Compilation error'
         exit 1
