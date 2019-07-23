@@ -155,7 +155,7 @@ static void gen(Node const* node)
 
         codegen_context = node->function->context;
 
-        // プロローグ.
+        // Prorogue.
         printf("  push rbp\n");
         printf("  mov rbp, rsp\n");
 
@@ -185,11 +185,9 @@ static void gen(Node const* node)
         // Allocate the local variable space without argumens.
         printf("  sub rsp, %zd\n", codegen_context->current_offset - used_size);
 
-        // 本体のblockを展開.
-        // 結果はraxに格納済み.
         gen(node->lhs);
 
-        // エピローグ.
+        // Epilogue.
         printf("  mov rsp, rbp\n");
         printf("  pop rbp\n");
         printf("  ret\n");
@@ -202,7 +200,7 @@ static void gen(Node const* node)
     if (node->ty == ND_CALL) {
         Vector* args = node->call->arguments;
         if (6 < args->len) {
-            error("6個より多い引数には対応していない");
+            error("The number of arguments has to be less than 6");
         }
 
         for (size_t i = 0; i < args->len; i++) {
@@ -214,8 +212,7 @@ static void gen(Node const* node)
             printf("  pop %s\n", regs64[args->len - 1 - i]);
         }
 
-        // rspを16バイトアラインメントにする.
-        // 8バイトでalignして古いrspを格納する.
+        // Align rsp with 16bytes.
         printf("  mov rax, rsp\n");
         printf("  and rsp, -8\n");
         printf("  push rax\n");
@@ -232,7 +229,7 @@ static void gen(Node const* node)
             gen(node->stmts->data[i]);
             printf("  pop rax\n");
         }
-        // 最後のものを結果として扱う.
+        // The last one is used the result.
         printf("  push rax\n");
         return;
     }
@@ -248,7 +245,7 @@ static void gen(Node const* node)
 
         if (node->if_else->else_body == NULL) {
             printf("  .L_else_%p:\n", node->if_else);
-            // 空の結果を入れておく.
+            // Push dummy value.
             printf("  push 0\n");
         } else {
             printf("  jmp .L_if_end_%p\n", node->if_else);

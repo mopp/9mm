@@ -10,21 +10,21 @@
 #include <string.h>
 
 enum {
-    // 抽象構文木の型を表す値
-    ND_NUM = 256, // 整数のノードの型
+    // Type of abstract syntax tree
+    ND_NUM = 256, // Constant integer
     ND_RETURN,
-    ND_LVAR_NEW,  // Declare local variable.
-    ND_LVAR,      // Reference local variable.
-    ND_GVAR_NEW,  // Declare global variable.
-    ND_GVAR,      // Reference global variable.
+    ND_LVAR_NEW,  // Declare local variable
+    ND_LVAR,      // Reference local variable
+    ND_GVAR_NEW,  // Declare global variable
+    ND_GVAR,      // Reference global variable
     ND_IF,        // if
     ND_WHILE,     // while
     ND_FOR,       // for
     ND_BLOCK,     // "{" stmt* "}"
-    ND_CALL,      // 関数呼び出し
-    ND_FUNCTION,  // 関数定義
-    ND_REF,       // reference
-    ND_DEREF,     // dereference
+    ND_CALL,      // Call function
+    ND_FUNCTION,  // Define function
+    ND_REF,       // Reference variable
+    ND_DEREF,     // Dereference variable
     ND_STR,       // String literal
     ND_INCL_POST, // i++
     ND_DECL_POST, // i--
@@ -37,11 +37,11 @@ enum {
     ND_EQ,        // ==
     ND_NE,        // !=
 
-    // トークンの型を表す値
+    // Type of token
     TK_RETURN,
-    TK_IDENT,     // 識別子
-    TK_NUM,       // 整数トークン
-    TK_EOF,       // 入力の終わりを表すトークン
+    TK_IDENT,     // Identifier
+    TK_NUM,       // Integer
+    TK_EOF,       // End of file
     TK_IF,        // if
     TK_ELSE,      // else
     TK_WHILE,     // while
@@ -69,12 +69,12 @@ enum {
 };
 
 struct token {
-    int ty; // トークンの型
+    int ty; // Type of token
     // union {
-        size_t val;       // tyがTK_NUMの場合、その数値
-        char const* name; // tyがTK_IDENTの場合、その名前
+        size_t val;       // value for TK_NUM
+        char const* name; // name for TK_IDENT
     // };
-    char const* input; // トークン文字列（エラーメッセージ用）
+    char const* input; // Token string for error message
 };
 typedef struct token Token;
 
@@ -99,7 +99,7 @@ struct node;
 struct node_if_else {
     struct node* condition;
     struct node* body;
-    struct node* else_body; // NULLはelse節が無いことを意味する
+    struct node* else_body; // NULL means does not have else clause.
 };
 typedef struct node_if_else NodeIfElse;
 

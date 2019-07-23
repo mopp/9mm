@@ -164,14 +164,14 @@ static Node* function(Type* type)
     // Parse the arguments of the function.
     while (!consume(')')) {
         if (consume(TK_EOF)) {
-            error_at(tokens[pos]->input, "関数の)が無い");
+            error_at(tokens[pos]->input, "missing ')' of the function");
         } else if (strcmp(tokens[pos]->name, "void") == 0 && tokens[pos + 1]->ty == ')') {
             pos += 2;
             break;
         } else {
             vec_push(node->function->args, decl_var(parse_type()));
 
-            // 引数が更にあったときのために','を消費しておく.
+            // Try to consume ',' for the next argument.
             consume(',');
         }
     }
@@ -294,13 +294,13 @@ static Node* block(void)
     Token** tokens = (Token**)(token_vector->data);
 
     if (!consume('{')) {
-        error_at(tokens[pos]->input, "ブロックの{が必要");
+        error_at(tokens[pos]->input, "'{' of the block is missing");
     }
 
     Node* node = new_node(ND_BLOCK, NULL, NULL);
     while (!consume('}')) {
         if (consume(TK_EOF)) {
-            error_at(tokens[pos]->input, "ブロックが閉じられていない");
+            error_at(tokens[pos]->input, "the block is not closed");
         }
 
         vec_push(node->stmts, stmt());
@@ -316,14 +316,14 @@ static Node* stmt(void)
 
     if (consume(TK_IF)) {
         if (!consume('(')) {
-            error_at(tokens[pos]->input, "ifの条件部は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "The condition of if must start from '('");
         }
 
         node = new_node(ND_IF, NULL, NULL);
         node->if_else->condition = expr();
 
         if (!consume(')')) {
-            error_at(tokens[pos]->input, "ifの条件部は')'で終わらなければならない");
+            error_at(tokens[pos]->input, "The condition of if must be terminated by ')'");
         }
 
         node->if_else->body = stmt();
@@ -335,14 +335,14 @@ static Node* stmt(void)
         }
     } else if (consume(TK_WHILE)) {
         if (!consume('(')) {
-            error_at(tokens[pos]->input, "whileの条件部は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "The condition of while must start from '('");
         }
 
         // Condition.
         Node* lhs = expr();
 
         if (!consume(')')) {
-            error_at(tokens[pos]->input, "whileの条件部は')'で終わらなければならない");
+            error_at(tokens[pos]->input, "The condition of while must be terminated by ')'");
         }
 
         char* break_label = malloc(sizeof(char) * 128);
@@ -360,14 +360,14 @@ static Node* stmt(void)
         node->break_label = break_label;
     } else if (consume(TK_FOR)) {
         if (!consume('(')) {
-            error_at(tokens[pos]->input, "forの直後は'('から始まらなくてはならない");
+            error_at(tokens[pos]->input, "The next of for has to be '('");
         }
 
         node = new_node(ND_FOR, NULL, NULL);
         if (!consume(';')) {
             node->fors->initializing = expr();
             if (!consume(';')) {
-                error_at(tokens[pos]->input, "';'ではないトークンです");
+                error_at(tokens[pos]->input, "';' is required");
             }
         } else {
             node->fors->initializing = NULL;
@@ -376,7 +376,7 @@ static Node* stmt(void)
         if (!consume(';')) {
             node->fors->condition = expr();
             if (!consume(';')) {
-                error_at(tokens[pos]->input, "';'ではないトークンです");
+                error_at(tokens[pos]->input, "';' is required");
             }
         } else {
             node->fors->condition = NULL;
@@ -387,7 +387,7 @@ static Node* stmt(void)
         } else {
             node->fors->updating = expr();
             if (!consume(')')) {
-                error_at(tokens[pos]->input, "forは')'で終わらなければならない");
+                error_at(tokens[pos]->input, "for must be terminated by ')'");
             }
         }
 
@@ -420,7 +420,7 @@ static Node* stmt(void)
         }
 
         if (!consume(';')) {
-            error_at(tokens[pos]->input, "';'ではないトークンです");
+            error_at(tokens[pos]->input, "';' is required");
         }
     }
 

@@ -143,7 +143,7 @@ Vector const* tokenize(char const* p)
         }
 
         if (token == NULL) {
-            error_at(p, "トークナイズできません");
+            error_at(p, "It cannot tokenize");
         }
 
         vec_push(tokens, token);

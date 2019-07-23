@@ -49,7 +49,7 @@ void* map_get(Map* map, char const* key)
         return NULL;
     }
 
-    // 逆順に探すことで新しいキーを優先する.
+    // Prefer newer key by traversing by reverse order.
     for (size_t i = keys->len; 0 < i; i--) {
         if (strcmp(keys->data[i - 1], key) == 0) {
             return map->vals->data[i - 1];

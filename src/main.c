@@ -45,7 +45,7 @@ int main(int argc, char const* const* argv)
 // Output an error for user and exit.
 void error_at(char const* loc, char const* msg)
 {
-    // locが含まれている行の開始地点と終了地点を取得
+    // Find head and tail of line which includes loc.
     char const* line = loc;
     while (input < line && line[-1] != '\n') {
         line--;
@@ -56,7 +56,7 @@ void error_at(char const* loc, char const* msg)
         end++;
     }
 
-    // 見つかった行が全体の何行目なのかを調べる
+    // Find where the found line is.
     size_t line_num = 1;
     for (char const* p = input; p < line; p++) {
         if (*p == '\n') {
@@ -64,13 +64,13 @@ void error_at(char const* loc, char const* msg)
         }
     }
 
-    // 見つかった行を、ファイル名と行番号と一緒に表示
+    // Print the line with filename and line number.
     size_t indent = fprintf(stderr, "%s:%zd: ", filename, line_num);
     fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
-    // エラー箇所を"^"で指し示して、エラーメッセージを表示
+    // Output the error and emphases the error location via "^".
     int pos = loc - line + indent;
-    fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
+    fprintf(stderr, "%*s", pos, ""); // print pos spaces.
     fprintf(stderr, "^ %s\n", msg);
     exit(1);
 }
