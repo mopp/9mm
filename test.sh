@@ -211,3 +211,5 @@ try 5   'struct hoge { int x; }; int main() { struct hoge** ar; struct hoge* ptr
 try 0   "void* foo(void) { return 1229801703532086340; } int main(void) { return foo() - 1229801703532086340;}"
 try 0   "void* foo(void) { return 1229801703532086340; } int main(void) { size_t p; p = foo(); return p - 1229801703532086340;}"
 try 0   "void* foo(size_t n) { return n - 1229801703532086340; } int main(void) { return foo(1229801703532086340);}"
+try 0   "int main(void) { void** data = 0; return data + 0;}"
+try 8   "int main(void) { void** data = 0; size_t i = 1; return data + i++;}"
