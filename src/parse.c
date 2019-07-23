@@ -128,6 +128,9 @@ static Node* global()
         // Define function.
         return function(type);
     } else {
+        // FIXME: Investigate why I need this cleanup...
+        context = NULL;
+
         // Declare global variable.
         Node* node = decl_var(type);
 
