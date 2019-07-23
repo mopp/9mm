@@ -18,7 +18,7 @@ $(MM): $(OBJS)
 $(OBJS): $(HEADERS)
 
 .PHONY: selfcompile
-selfcompile:
+selfcompile: $(PREV)
 	cat $(SRCS) > src/self.c
 	$(PREV) ./src/self.c > ./src/self.s
 	$(CC) $(AFLAGS) ./src/self.s -o $(NEXT)
