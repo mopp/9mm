@@ -165,6 +165,14 @@ struct node {
 };
 typedef struct node Node;
 
+struct code {
+    Node const* const* asts;
+    size_t count_ast;
+    Map const* str_label_map;
+};
+typedef struct code Code;
+
+
 #ifndef SELFHOST_9MM
 // main.c
 void error_at(char const*, char const*);
@@ -197,13 +205,10 @@ char const* preprocess(char*, char const*);
 Vector const* tokenize(char const*);
 
 // parse.c
-Node const* const* program(Vector const*);
+Code const* program(Vector const*);
 
 // codegen.c
-void generate(Node const* const*);
+void generate(Code const*);
 
 void runtest();
 #endif
-
-extern Map* str_label_map;
-extern Map* user_types;

@@ -36,7 +36,7 @@ int main(int argc, char const* const* argv)
     }
 
     Vector const* tokens = tokenize(input);
-    Node const* const* code = program(tokens);
+    Code const* code = program(tokens);
     generate(code);
 
     return 0;

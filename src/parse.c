@@ -42,15 +42,15 @@ static Context* context;
 static Map* gvar_type_map;
 
 // String literal to label map.
-Map* str_label_map;
+static Map* str_label_map;
 
 // Name to user defined type map.
-Map* user_types;
+static Map* user_types;
 
 // Enum member to number.
 static Map* enum_map;
 
-Node const* const* program(Vector const* tv)
+Code const* program(Vector const* tv)
 {
     token_vector = tv;
 
@@ -61,12 +61,16 @@ Node const* const* program(Vector const* tv)
     user_types = new_map();
     enum_map = new_map();
 
-    size_t i = 0;
-    Node const** code = malloc(sizeof(Node*) * 64);
+    size_t count = 0;
+    Node const** asts = malloc(sizeof(Node*) * 64);
     while (tokens[pos]->ty != TK_EOF) {
-        code[i++] = global();
+        asts[count++] = global();
     }
-    code[i] = NULL;
+
+    Code* code = malloc(sizeof(Code));
+    code->asts = asts;
+    code->count_ast = count;
+    code->str_label_map = str_label_map;
 
     return code;
 }
