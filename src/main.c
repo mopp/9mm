@@ -77,7 +77,7 @@ void error_at(char const* loc, char const* msg)
 
 #ifndef SELFHOST_9MM
 // Output log for me and exit.
-void _log(char const* level, const char* file, const char* func, size_t line, char const* fmt, ...)
+void log_internal(char const* level, const char* file, const char* func, size_t line, char const* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
