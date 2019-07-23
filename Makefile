@@ -6,9 +6,10 @@ HEADERS     := $(wildcard src/*.h)
 TESTS_IN    := $(filter-out test/lib.c, $(wildcard test/*.c))
 TESTS_DIFFS := $(TESTS_IN:.c=.diff)
 MM          := ./9mm
-MMS         := ./9mms
-TEST_MM     ?= $(MM)
-TEST_LIB	:= test/lib.o
+TEST_LIB    := test/lib.o
+TEST_9MM    ?= $(MM)
+PREV        ?= $(MM)
+NEXT        ?= ./9mms
 
 
 $(MM): $(OBJS)
@@ -16,33 +17,27 @@ $(MM): $(OBJS)
 
 $(OBJS): $(HEADERS)
 
-$(MMS): $(MM)
+.PHONY: selfcompile
+selfcompile:
 	cat $(SRCS) > src/self.c
-	$(MM) ./src/self.c > ./src/self.s
-	$(CC) $(AFLAGS) ./src/self.s -o $@
+	$(PREV) ./src/self.c > ./src/self.s
+	$(CC) $(AFLAGS) ./src/self.s -o $(NEXT)
 
 .PHONY: test
-test: $(TEST_MM) $(TEST_LIB)
-	$(TEST_MM) --test
-	./test.sh $(TEST_MM)
-	make -s $(TESTS_DIFFS) TEST_MM=$(TEST_MM)
+test: $(TEST_9MM) $(TEST_LIB)
+	$(TEST_9MM) --test
+	./test.sh $(TEST_9MM)
+	make -s $(TESTS_DIFFS) TEST_9MM=$(TEST_9MM)
 
 .PHONY: diffs
 diffs: $(TESTS_DIFFS)
 
-%.diff: %.c %.ans $(TEST_MM) $(TEST_LIB)
-	$(TEST_MM) $< > $*.s
+%.diff: %.c %.ans $(TEST_9MM) $(TEST_LIB)
+	$(TEST_9MM) $< > $*.s
 	$(CC) $(AFLAGS) -o $*.bin $*.s $(TEST_LIB)
 	./$*.bin > $*.out
 	diff $*.ans $*.out | tee $*.diff
 
-.PHONY: selfhost
-selfhost: $(MMS)
-
-.PHONY: test_selfhost
-test_selfhost: $(MMS)
-	make -s test TEST_MM=$(MMS)
-
 .PHONY: clean
 clean:
-	rm -f $(MM) $(OBJS) tmp tmp.s src/self.* $(MMS) test/*.s test/*.bin test/*.out $(test/lib.o) $(TESTS_DIFFS)
+	rm -f $(MM)* $(OBJS) tmp tmp.s src/self.* test/*.s test/*.bin test/*.out $(test/lib.o) $(TESTS_DIFFS)

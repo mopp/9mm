@@ -18,10 +18,10 @@ Usage:
 > make test
 
 # Build "9mms" which is selfhosted 9mm.
-> make selfhost
+> make selfcompile
 
 # Test it.
-> make test_selfhost
+> make test TEST_9MM=./9mms
 ```
 
 ## Production rule
