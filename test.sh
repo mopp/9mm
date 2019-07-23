@@ -215,3 +215,4 @@ try 0   "void* foo(void) { return 1229801703532086340; } int main(void) { size_t
 try 0   "void* foo(size_t n) { return n - 1229801703532086340; } int main(void) { return foo(1229801703532086340);}"
 try 0   "int main(void) { void** data = 0; return data + 0;}"
 try 8   "int main(void) { void** data = 0; size_t i = 1; return data + i++;}"
+try 1   "int main(void) { int i = 1 != 0 &&  1 < 10; return i; }"
