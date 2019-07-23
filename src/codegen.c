@@ -66,10 +66,11 @@ static void gen(Node const* node)
 
     if (node->ty == '!') {
         gen(node->lhs);
+        printf("  xor rdx, rdx\n");
         printf("  pop rax\n");
         printf("  cmp rax, 0\n");
-        printf("  sete al\n");
-        printf("  push rax\n");
+        printf("  sete dl\n");
+        printf("  push rdx\n");
 
         return;
     }
