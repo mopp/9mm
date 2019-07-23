@@ -21,7 +21,7 @@ static Node* ref_var(void);
 static Type* parse_type(void);
 static int consume(int);
 static Node* new_node(int, Node*, Node*);
-static Node* new_node_num(int);
+static Node* new_node_num(size_t);
 static Type* new_type(int, Type const*);
 static Type* new_user_type(UserType*);
 static size_t get_type_size(Type const*);
@@ -908,7 +908,6 @@ static Node* new_node(int ty, Node* lhs, Node* rhs)
     node->ty = ty;
     node->lhs = lhs;
     node->rhs = rhs;
-
 
     // Allocate the type specific object.
     if (ty == ND_FUNCTION) {

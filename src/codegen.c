@@ -159,6 +159,8 @@ static void gen(Node const* node)
         printf("  mov rbp, rsp\n");
 
         // Store arguments into the local stack.
+        // FIXME: keep this size in the context.
+        size_t used_size = 0;
         for (size_t i = 0; i < node->function->args->len; i++) {
             Node* arg = node->function->args->data[i];
 
@@ -166,15 +168,21 @@ static void gen(Node const* node)
                 printf("  mov rax, %s\n", regs64[i]);
                 printf("  sub rsp, 1\n");
                 printf("  mov [rsp], al\n");
+                used_size += 1;
             } else if (arg->rtype->size == 4) {
                 printf("  sub rsp, 4\n");
                 printf("  mov [rsp], %s\n", regs32[i]);
+                used_size += 4;
             } else if (arg->rtype->size == 8) {
                 printf("  push %s\n", regs64[i]);
+                used_size += 8;
             } else {
                 error("Not supported");
             }
         }
+
+        // Allocate the local variable space without argumens.
+        printf("  sub rsp, %zd\n", codegen_context->current_offset - used_size);
 
         // 本体のblockを展開.
         // 結果はraxに格納済み.
@@ -317,7 +325,6 @@ static void gen(Node const* node)
     }
 
     if (node->ty == ND_LVAR_NEW) {
-        printf("  sub rsp, %zd\n", node->rtype->size);
         // Push a dummy value for pop after that because it's based on stack machine.
         printf("  push 0\n");
         return;
