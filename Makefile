@@ -1,6 +1,6 @@
 CFLAGS      := -std=c11 -Wall -g -static
 AFLAGS      := -g -no-pie
-SRCS        := src/main.c src/tokenize.c src/parse.c src/codegen.c src/container.c
+SRCS        := src/main.c src/preprocessor.c src/tokenize.c src/parse.c src/codegen.c src/container.c
 OBJS        := $(SRCS:.c=.o)
 HEADERS     := $(wildcard src/*.h)
 TESTS_IN    := $(filter-out test/lib.c, $(wildcard test/*.c))

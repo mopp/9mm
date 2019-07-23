@@ -169,6 +169,7 @@ typedef struct node Node;
 // main.c
 void error_at(char const*, char const*);
 void _log(char const*, const char*, const char*, size_t, char const*, ...);
+char* read_file(char const*);
 
 #define __log(level, ...) \
     _log(level, __FILE__, __func__, __LINE__, __VA_ARGS__);
@@ -188,6 +189,9 @@ void _log(char const*, const char*, const char*, size_t, char const*, ...);
 
 #define debug(...) \
     __log("\033[1;34m[DEBUG]\033[0m", __VA_ARGS__);
+
+// preprocessor.c
+char const* preprocess(char*, char const*);
 
 // tokenize.c
 Vector const* tokenize(char const*);
