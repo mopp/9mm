@@ -1,10 +1,30 @@
 # 9mm
-Hobby C Compiler
+Hobby C (subset) Compiler  
+`9mm` can compile itself.
 
-based on [低レイヤを知りたい人のためのCコンパイラ作成入門](https://www.sigbus.info/compilerbook/#%E9%9B%BB%E5%8D%93%E3%83%AC%E3%83%99%E3%83%AB%E3%81%AE%E8%A8%80%E8%AA%9E%E3%81%AE%E4%BD%9C%E6%88%90).
 
+## How to build/test
+```console
+> make 9mm
 
-# Production rule
+> ./9mm
+Usage:
+  ./9mm [--test] [--str 'your program'] [FILEPATH]
+
+  --test run test
+  --str  input c codes as a string
+
+# test "9mm"
+> make test
+
+# Build "9mms" which is selfhosted 9mm.
+> make selfhost
+
+# Test it.
+> make test_selfhost
+```
+
+## Production rule
 ```txt
 program    = global
 global     = (decl_var ";")* |
@@ -47,3 +67,12 @@ ident      = chars (chars | num)+
 chars      = [a-zA-Z_]
 num        = [0-9]+
 ```
+
+
+# Acknowledge and Reference
+- [低レイヤを知りたい人のためのCコンパイラ作成入門](https://www.sigbus.info/compilerbook).
+
+
+# License
+The MIT License (MIT)  
+See [LICENSE](./LICENSE)
