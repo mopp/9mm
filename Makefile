@@ -3,11 +3,12 @@ AFLAGS      := -g -no-pie
 SRCS        := src/main.c src/tokenize.c src/parse.c src/codegen.c src/container.c
 OBJS        := $(SRCS:.c=.o)
 HEADERS     := $(wildcard src/*.h)
-TESTS_IN    := $(wildcard test/*.c)
+TESTS_IN    := $(filter-out test/lib.c, $(wildcard test/*.c))
 TESTS_DIFFS := $(TESTS_IN:.c=.diff)
 MM          := ./9mm
 MMS         := ./9mms
 TEST_MM     ?= $(MM)
+TEST_LIB	:= test/lib.o
 
 
 $(MM): $(OBJS)
@@ -21,7 +22,7 @@ $(MMS): $(MM)
 	$(CC) $(AFLAGS) ./src/self.s -o $@
 
 .PHONY: test
-test: $(TEST_MM) src/lib.o
+test: $(TEST_MM) $(TEST_LIB)
 	$(TEST_MM) --test
 	./test.sh $(TEST_MM)
 	make -s $(TESTS_DIFFS) TEST_MM=$(TEST_MM)
@@ -29,9 +30,9 @@ test: $(TEST_MM) src/lib.o
 .PHONY: diffs
 diffs: $(TESTS_DIFFS)
 
-%.diff: %.c %.ans $(TEST_MM) src/lib.o
+%.diff: %.c %.ans $(TEST_MM) $(TEST_LIB)
 	$(TEST_MM) $< > $*.s
-	$(CC) $(AFLAGS) -o $*.bin $*.s src/lib.o
+	$(CC) $(AFLAGS) -o $*.bin $*.s $(TEST_LIB)
 	./$*.bin > $*.out
 	diff $*.ans $*.out | tee $*.diff
 
@@ -44,4 +45,4 @@ test_selfhost: $(MMS)
 
 .PHONY: clean
 clean:
-	rm -f $(MM) $(OBJS) tmp tmp.s src/self.* $(MMS) test/*.s test/*.bin test/*.out $(TESTS_DIFFS)
+	rm -f $(MM) $(OBJS) tmp tmp.s src/self.* $(MMS) test/*.s test/*.bin test/*.out $(test/lib.o) $(TESTS_DIFFS)

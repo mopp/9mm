@@ -13,7 +13,7 @@ try() {
         exit 1
     fi
 
-    gcc -no-pie -g -o tmp tmp.s src/lib.o
+    gcc -no-pie -g -o tmp tmp.s ./test/lib.o
     ./tmp
     actual="$?"
 
