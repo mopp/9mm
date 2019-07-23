@@ -1,8 +1,7 @@
 *~
 *.o
 tmp*
-9mm
-9mms
+9mm*
 src/self.*
 test/*.s
 test/*.bin
