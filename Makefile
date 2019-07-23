@@ -40,4 +40,4 @@ diffs: $(TESTS_DIFFS)
 
 .PHONY: clean
 clean:
-	rm -f $(MM)* $(OBJS) tmp tmp.s src/self.* test/*.s test/*.bin test/*.out $(test/lib.o) $(TESTS_DIFFS)
+	rm -f $(MM)* $(OBJS) tmp tmp.s src/self.* test/*.s test/*.bin test/*.out $(TEST_LIB) $(TESTS_DIFFS)
