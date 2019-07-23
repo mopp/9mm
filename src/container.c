@@ -101,10 +101,13 @@ static inline void test_vector()
 
     free(vec);
 }
+#endif
 
 void runtest()
 {
+#ifndef SELFHOST_9MM
     test_vector();
     test_map();
-}
 #endif
+    return;
+}
